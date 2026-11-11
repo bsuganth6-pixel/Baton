@@ -1,0 +1,23 @@
+{
+  "export_version": 1,
+  "synthetic": true,
+  "workspace": "campusconnect",
+  "channel": "leads-private",
+  "messages": [
+    {
+      "ts": "2026-08-26T09:15:00+05:30",
+      "user": "sana",
+      "text": "Hosting is about INR 3,800 a month now."
+    },
+    {
+      "ts": "2026-08-26T09:20:00+05:30",
+      "user": "meera",
+      "text": "The council approved INR 5,000 per month for hosting from January."
+    },
+    {
+      "ts": "2026-09-30T11:00:00+05:30",
+      "user": "meera",
+      "text": "Thanks both. Let us keep the budget between the three of us until the council meets."
+    }
+  ]
+}

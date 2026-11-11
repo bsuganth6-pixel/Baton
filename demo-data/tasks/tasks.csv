@@ -1,0 +1,11 @@
+id,title,owner,status,priority,created,updated,due,notes
+T-101,Set up staging environment,arjun,Done,P2,2025-02-19,2025-03-04,,
+T-118,Add club announcements endpoint,priya,Done,P2,2026-01-12,2026-02-05,,
+T-122,Dark mode for the app,rohan,Done,P3,2026-01-20,2026-02-18,,
+T-129,Fix Android back button on the event page,rohan,Done,P2,2026-03-03,2026-03-09,,
+T-140,Event approval queue,sana,In progress,P2,2026-03-01,2026-09-02,2026-11-15,Approval queue: club presidents approve their own club's events. Faculty only reviews campus-wide events.
+T-152,Renew domain and SSL,,Open,P1,2026-09-28,2026-10-12,2026-11-28,No owner assigned since Kabir left.
+T-155,Weekly digest email,priya,In progress,P2,2026-08-10,2026-10-05,2026-10-31,Template is ready and the sender setup is still pending.
+T-160,Rotate the temporary admin password,arjun,Open,P1,2026-10-01,2026-10-01,2026-10-25,The temporary admin password is Campus@2026! so change it after the first login.
+T-171,Write the backend handover document,arjun,In progress,P1,2026-10-01,2026-10-14,2026-11-30,Last working day is 2026-11-30.
+T-175,Shadow one production deploy,priya,Done,P2,2026-10-01,2026-10-08,2026-11-10,

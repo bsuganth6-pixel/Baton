@@ -1,0 +1,8 @@
+title = "Baton gitleaks config"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "demo-data is synthetic: it contains fake secrets and fake personal data on purpose"
+paths = ['''(^|/)demo-data/''']

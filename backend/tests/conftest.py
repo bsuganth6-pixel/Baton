@@ -3,19 +3,26 @@ from __future__ import annotations
 
 import json
 import os
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from pathlib import Path
 from typing import Any
 
 import pytest
 from alembic import command
 from alembic.config import Config
+from fastapi.testclient import TestClient
 from sqlalchemy import Engine, create_engine, event, text
 from sqlalchemy.engine import make_url
 from sqlalchemy.orm import Session
 
-from app.config import normalize_database_url
+from app.config import Settings, normalize_database_url
+from app.db import make_sessionmaker
+from app.ingest.seed import SeedReport, seed_demo
+from app.main import create_app
+from app.models import Role, User
+from app.protect.auth import create_access_token, hash_password
 
+DEMO_PASSWORD = "demo-password-123"
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 DEMO_DIR = BACKEND_DIR.parent / "demo-data"
 
@@ -33,6 +40,13 @@ def _wipe_postgres(url: str) -> None:
         conn.execute(text("DROP SCHEMA IF EXISTS public CASCADE"))
         conn.execute(text("CREATE SCHEMA public"))
     engine.dispose()
+
+
+@pytest.fixture(autouse=True)
+def _clean_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A developer's own DATABASE_URL, DEMO_MODE and friends must never leak into a test."""
+    for name in Settings.model_fields:
+        monkeypatch.delenv(name.upper(), raising=False)
 
 
 @pytest.fixture(scope="session")
@@ -94,3 +108,44 @@ def session(engine: Engine) -> Iterator[Session]:
     with Session(engine) as db:
         yield db
         db.rollback()
+
+
+# --- the API ------------------------------------------------------------------------------------------
+
+@pytest.fixture
+def settings(db_url: str) -> Settings:
+    return Settings(_env_file=None, app_env="test", database_url=db_url, secret_key="test-secret-" + "k" * 40,
+                    bcrypt_rounds=4, cookie_secure=False, demo_password=DEMO_PASSWORD, max_upload_bytes=2_000)
+
+
+@pytest.fixture
+def client(engine: Engine, settings: Settings) -> Iterator[TestClient]:
+    with TestClient(create_app(settings, engine)) as test_client:
+        yield test_client
+
+
+@pytest.fixture
+def users(engine: Engine) -> dict[Role, User]:
+    """One user per role. Their password is "pw-<role>"."""
+    with Session(engine, expire_on_commit=False) as db:
+        made = {role: User(email=f"{role.value}@test.example", name=role.value.title(), role=role,
+                           password_hash=hash_password(f"pw-{role.value}", 4)) for role in Role}
+        db.add_all(made.values())
+        db.commit()
+    return made
+
+
+@pytest.fixture
+def bearer(users: dict[Role, User], settings: Settings) -> Callable[[Role], dict[str, str]]:
+    def headers(role: Role) -> dict[str, str]:
+        token = create_access_token(users[role].id, settings.signing_key, 60)
+        return {"Authorization": f"Bearer {token}"}
+
+    return headers
+
+
+@pytest.fixture
+def seeded(engine: Engine, settings: Settings) -> SeedReport:
+    """The demo project, users and nine sources, ingested through the real path."""
+    demo = settings.model_copy(update={"demo_mode": True, "max_upload_bytes": 1_000_000})
+    return seed_demo(make_sessionmaker(engine), demo)

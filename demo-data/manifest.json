@@ -1,0 +1,19 @@
+{
+  "project": {
+    "slug": "campusconnect",
+    "name": "CampusConnect handover: Arjun Mehta to Priya Nair",
+    "description": "Synthetic demo. Arjun Mehta, backend lead of the CampusConnect student app, leaves on 2026-11-30 and Priya Nair takes over.",
+    "as_of": "2026-10-20"
+  },
+  "sources": [
+    {"path": "github/export.json", "name": "campus-api GitHub export", "kind": "github", "clearance": 1},
+    {"path": "notes/architecture-overview.md", "name": "Architecture overview", "kind": "notes", "clearance": 1},
+    {"path": "notes/meeting-notes-2025-02-18.md", "name": "Tech sync, 18 Feb 2025", "kind": "notes", "clearance": 1},
+    {"path": "notes/deployment-runbook.md", "name": "Production deployment runbook", "kind": "notes", "clearance": 2},
+    {"path": "notes/vendor-contracts.md", "name": "Hosting and vendor summary", "kind": "notes", "clearance": 3},
+    {"path": "tasks/tasks.csv", "name": "Task tracker export", "kind": "tasks", "clearance": 1},
+    {"path": "chat/dev-channel.json", "name": "#dev chat export", "kind": "chat", "clearance": 1},
+    {"path": "chat/leads-private.json", "name": "#leads-private chat export", "kind": "chat", "clearance": 3},
+    {"path": "leaver_qa/exit-qa.md", "name": "Exit handover questionnaire (Arjun Mehta)", "kind": "leaver_qa", "clearance": 2}
+  ]
+}

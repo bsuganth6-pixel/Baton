@@ -2,6 +2,28 @@
 
 One entry per build step. A decision is something the spec left open; each is open to review.
 
+## Phases 1 and 2: backend core and Connect
+
+Decisions
+
+1. **Sign-in lands with the first endpoint**, ahead of the build order, so there is never an unauthenticated upload route. Sessions are a signed token sent as a bearer header or an `HttpOnly`, `SameSite=Lax` cookie; cookie sessions must also send `X-Baton-Client: web` to change anything. Wrong password and unknown email answer identically and cost the same time.
+2. **Counts of withheld items.** The first spec says "N items withheld"; the Round 2 prompt says counts must not leak. `SHOW_WITHHELD_COUNT` (default true) switches between the two; it is read from the environment now and takes effect when the handover views arrive in phase 7. Sources above a viewer's clearance are never counted or listed, and answer `404` like a missing source.
+3. **Redaction happens before storage.** Original uploads are never persisted: only redacted text, chunk by chunk, plus a hash of the original for duplicate detection. The 1 MiB upload cap sits at Starlette's in-memory ceiling, so an upload is never spooled to a temporary file either.
+4. **Redaction favours safety over detail.** Secrets (key-value and sentence forms, URL passwords, bearer tokens and JWTs, provider key formats, random-looking tokens) and PII (email, phone, UPI, card with Luhn, national IDs, PAN, IFSC, bank accounts and dates of birth by context, student IDs) are replaced with `[REDACTED:kind]`. Names are kept. Every pattern is bounded and a test feeds it hostile input.
+5. **Unreadable files are stored as failed sources**, with a user-safe reason, so the Sources page shows what is missing. Policy rejections (type, size, empty) store nothing. A `.json` file that is not JSON fails; it is not read as prose.
+6. **Demo seeding reads `demo-data/manifest.json`, never `ground_truth.json`.** The live app earns its claims by processing documents; a test keeps the manifest and the oracle in agreement.
+7. **One error shape for every failure**, with a request id. Validation errors never echo input; unexpected errors are logged in full server-side and shown as a generic message. They are handled inside the request middleware so they carry the request id and security headers too.
+8. **Structure additions:** `app/db.py` (engine and sessions), `app/api/{context,errors,middleware,deps,schemas}.py`, `demo-data/manifest.json`. The app is built by a factory: `uvicorn app.main:create_app --factory`.
+9. **SQLite is for tests and quick local runs only.** Every database test also runs on real PostgreSQL when `TEST_DATABASE_URL` is set.
+10. Tests use `httpx2`, the client Starlette's `TestClient` now asks for.
+
+Bugs found by the tests and fixed (each has a regression test)
+
+- FastAPI turns any exception raised while reading a request body into a `400`, which hid the `413` for oversized uploads. `ApiError` is now an `HTTPException`, which FastAPI re-raises.
+- A `500` was produced outside the request middleware, so it lost its request id and security headers. The middleware now owns that path.
+- A malformed `.json` upload was silently ingested as prose.
+- `requirements.txt` was missing the new runtime dependencies; found by installing into a fresh virtualenv.
+
 ## Step 1: demo data, ground truth, models, first migration
 
 Decisions

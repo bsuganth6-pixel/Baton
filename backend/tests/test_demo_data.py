@@ -13,7 +13,7 @@ from typing import Any
 import pytest
 
 DEMO = Path(__file__).resolve().parents[2] / "demo-data"
-NON_SOURCE_FILES = {"README.md", "ground_truth.json"}
+NON_SOURCE_FILES = {"README.md", "ground_truth.json", "manifest.json"}
 
 TRUTH: dict[str, Any] = json.loads((DEMO / "ground_truth.json").read_text(encoding="utf-8"))
 SOURCES = {s["id"]: s for s in TRUTH["sources"]}
@@ -74,6 +74,15 @@ def test_demo_data_readme_exists() -> None:
 def test_every_file_is_a_listed_source_and_every_source_is_a_file() -> None:
     on_disk = {p.relative_to(DEMO).as_posix() for p in DEMO.rglob("*") if p.is_file()} - NON_SOURCE_FILES
     assert {s["path"] for s in TRUTH["sources"]} == on_disk
+
+
+def test_manifest_agrees_with_the_ground_truth_sources() -> None:
+    """The manifest feeds the live app, the ground truth feeds the tests. They must not drift apart."""
+    manifest = json.loads((DEMO / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["project"]["as_of"] == TRUTH["as_of"]
+    declared = {(s["path"], s["kind"], s["clearance"]) for s in manifest["sources"]}
+    assert declared == {(s["path"], s["kind"], s["clearance"]) for s in TRUTH["sources"]}
+    assert all(s["name"].strip() for s in manifest["sources"])
 
 
 def test_ids_are_unique() -> None:

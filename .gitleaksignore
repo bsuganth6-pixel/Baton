@@ -1,0 +1,5 @@
+# Three findings in commit 23961b1: fake secret-shaped inputs in the redactor's unit tests.
+# History is preserved, so they are listed here; later commits build those fixtures from parts.
+23961b1435e8c7efacc67603eb213225e0a21b6b:backend/tests/test_redact.py:aws-access-token:72
+23961b1435e8c7efacc67603eb213225e0a21b6b:backend/tests/test_redact.py:generic-api-key:66
+23961b1435e8c7efacc67603eb213225e0a21b6b:backend/tests/test_redact.py:generic-api-key:67

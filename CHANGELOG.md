@@ -16,6 +16,7 @@ Decisions
 8. **Structure additions:** `app/db.py` (engine and sessions), `app/api/{context,errors,middleware,deps,schemas}.py`, `demo-data/manifest.json`. The app is built by a factory: `uvicorn app.main:create_app --factory`.
 9. **SQLite is for tests and quick local runs only.** Every database test also runs on real PostgreSQL when `TEST_DATABASE_URL` is set.
 10. Tests use `httpx2`, the client Starlette's `TestClient` now asks for.
+11. gitleaks flagged three fake secret-shaped inputs in `test_redact.py` (commit `23961b1`). History is not rewritten, so those three findings are listed by fingerprint in `.gitleaksignore`; the fixtures are now built from parts so they no longer match. Nothing else is allowlisted outside `demo-data/`.
 
 Bugs found by the tests and fixed (each has a regression test)
 

@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#111827">
+    <meta name="description" content="Baton keeps project knowledge clear, protected, and ready to hand over.">
+    <title>Baton — Knowledge that moves with your team</title>
+    <link rel="stylesheet" href="/assets/styles.css">
+    <script defer src="/assets/app.js"></script>
+  </head>
+  <body>
+    <div class="auth-screen" id="auth-screen">
+      <section class="auth-story" aria-label="About Baton">
+        <a class="brand brand-light" href="/" aria-label="Baton home">
+          <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+          <span>baton</span>
+        </a>
+        <div class="story-copy">
+          <p class="eyebrow eyebrow-light">HANDOVERS, WITHOUT THE GUESSWORK</p>
+          <h1>Keep the important things moving.</h1>
+          <p class="story-description">
+            Bring project knowledge together, keep sensitive details protected, and make the next handover feel
+            like a beginning.
+          </p>
+          <div class="story-orbit" aria-hidden="true">
+            <div class="orbit-ring orbit-ring-one"></div>
+            <div class="orbit-ring orbit-ring-two"></div>
+            <div class="orbit-core"><span class="brand-mark"><span></span><span></span><span></span></span></div>
+            <span class="orbit-dot orbit-dot-one"></span>
+            <span class="orbit-dot orbit-dot-two"></span>
+            <span class="orbit-dot orbit-dot-three"></span>
+            <span class="orbit-label orbit-label-one">context</span>
+            <span class="orbit-label orbit-label-two">people</span>
+            <span class="orbit-label orbit-label-three">decisions</span>
+          </div>
+        </div>
+        <div class="story-footer">
+          <span>Built for thoughtful transitions</span>
+          <span class="story-footer-mark" aria-hidden="true">B</span>
+        </div>
+      </section>
+
+      <section class="auth-panel" aria-labelledby="login-title">
+        <div class="auth-panel-inner">
+          <a class="brand brand-dark" href="/" aria-label="Baton home">
+            <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+            <span>baton</span>
+          </a>
+          <div class="auth-heading">
+            <p class="eyebrow">YOUR WORKSPACE, IN CONTEXT</p>
+            <h2 id="login-title">Welcome back.</h2>
+            <p>Sign in to pick up where your team left off.</p>
+          </div>
+          <form id="login-form" class="login-form">
+            <label for="email">Work email</label>
+            <div class="input-wrap">
+              <span class="input-icon" aria-hidden="true">
+                <svg viewBox="0 0 20 20"><rect x="2.5" y="4" width="15" height="12" rx="2"></rect><path d="m3.5 5 6.5 5.2L16.5 5"></path></svg>
+              </span>
+              <input id="email" name="email" type="email" autocomplete="username" placeholder="you@company.com" required>
+            </div>
+            <label for="password">Password</label>
+            <div class="input-wrap">
+              <span class="input-icon" aria-hidden="true">
+                <svg viewBox="0 0 20 20"><rect x="3.5" y="8.5" width="13" height="9" rx="2"></rect><path d="M6.5 8.5V6a3.5 3.5 0 0 1 7 0v2.5"></path><path d="M10 12v2"></path></svg>
+              </span>
+              <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required>
+              <button class="password-toggle" id="password-toggle" type="button" aria-label="Show password">Show</button>
+            </div>
+            <button class="button button-primary button-wide" id="login-button" type="submit">
+              <span>Sign in to Baton</span>
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11m-4-4 4 4-4 4"></path></svg>
+            </button>
+            <p class="form-message" id="auth-message" role="status" aria-live="polite"></p>
+          </form>
+          <div class="auth-note">
+            <span class="note-icon" aria-hidden="true">
+              <svg viewBox="0 0 20 20"><path d="M10 2.5 16 5v4.4c0 3.7-2.5 6.6-6 8.1-3.5-1.5-6-4.4-6-8.1V5z"></path><path d="m7.5 9.8 1.7 1.7 3.5-3.7"></path></svg>
+            </span>
+            <p>Access is managed by your workspace. Ask your admin if you need an account.</p>
+          </div>
+          <div class="auth-bottom">
+            <span>Protected by role-based access</span>
+            <span class="status-inline"><i class="status-dot" id="auth-status-dot"></i><span id="auth-api-status">Checking connection</span></span>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="app-shell" id="app-shell" hidden>
+      <aside class="sidebar" id="sidebar">
+        <a class="brand brand-light sidebar-brand" href="/" aria-label="Baton home">
+          <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+          <span>baton</span>
+        </a>
+        <div class="workspace-label">
+          <span class="workspace-avatar" aria-hidden="true">W</span>
+          <span class="workspace-name">Workspace</span>
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"></path></svg>
+        </div>
+        <p class="nav-caption">WORKSPACE</p>
+        <nav class="primary-nav" aria-label="Main navigation">
+          <button class="nav-link is-active" type="button" data-view="overview">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="2.5" width="6" height="6" rx="1.5"></rect><rect x="11.5" y="2.5" width="6" height="6" rx="1.5"></rect><rect x="2.5" y="11.5" width="6" height="6" rx="1.5"></rect><rect x="11.5" y="11.5" width="6" height="6" rx="1.5"></rect></svg>
+            <span>Overview</span>
+          </button>
+          <button class="nav-link" type="button" data-view="sources">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 2.5h6l4 4v11H5z"></path><path d="M11 2.5v4h4M7.5 10h5M7.5 13h5"></path></svg>
+            <span>Sources</span>
+            <span class="nav-count" id="nav-source-count">0</span>
+          </button>
+        </nav>
+        <div class="sidebar-bottom">
+          <div class="sidebar-tip">
+            <span class="tip-spark" aria-hidden="true">✦</span>
+            <p><strong>Good handovers are built on evidence.</strong><br>Every source stays connected to its context.</p>
+          </div>
+          <div class="user-menu">
+            <span class="user-avatar" id="user-avatar">B</span>
+            <span class="user-summary"><strong id="user-name">Baton user</strong><small id="user-role">Member</small></span>
+            <button class="icon-button logout-button" id="logout-button" type="button" aria-label="Sign out" title="Sign out">
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M8 3H4.5A1.5 1.5 0 0 0 3 4.5v11A1.5 1.5 0 0 0 4.5 17H8"></path><path d="M11 6l4 4-4 4m4-4H7"></path></svg>
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <div class="workspace-main">
+        <header class="topbar">
+          <button class="icon-button mobile-menu-button" id="mobile-menu-button" type="button" aria-label="Open navigation">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14"></path></svg>
+          </button>
+          <div class="breadcrumbs"><span>Workspace</span><span class="breadcrumb-slash">/</span><strong id="breadcrumb-current">Overview</strong></div>
+          <div class="topbar-right">
+            <span class="demo-pill" id="demo-pill" hidden>DEMO WORKSPACE</span>
+            <span class="service-status"><i class="status-dot" id="api-status-dot"></i><span id="api-status">Checking connection</span></span>
+            <button class="topbar-avatar" type="button" aria-label="Current user" id="topbar-avatar">B</button>
+          </div>
+        </header>
+
+        <main class="page-content">
+          <section class="page-view" id="overview-view" aria-labelledby="overview-title">
+            <div class="welcome-banner">
+              <div class="welcome-copy">
+                <p class="eyebrow eyebrow-accent">YOUR PROJECT, IN GOOD HANDS</p>
+                <h1 id="overview-title">Welcome back, <span id="welcome-name">there</span><span class="welcome-period">.</span></h1>
+                <p>Your team's knowledge is taking shape. Here's what's ready to carry forward.</p>
+                <button class="button button-dark" type="button" data-view="sources">
+                  Explore sources
+                  <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11m-4-4 4 4-4 4"></path></svg>
+                </button>
+              </div>
+              <div class="welcome-illustration" aria-hidden="true">
+                <div class="illustration-halo"></div>
+                <div class="illustration-line illustration-line-one"></div>
+                <div class="illustration-line illustration-line-two"></div>
+                <div class="illustration-node node-one"><span>01</span></div>
+                <div class="illustration-node node-two"><span>02</span></div>
+                <div class="illustration-node node-three"><span>03</span></div>
+                <div class="illustration-center"><span class="brand-mark"><span></span><span></span><span></span></span></div>
+                <span class="illustration-caption">context connected</span>
+              </div>
+            </div>
+
+            <div class="stats-grid" aria-label="Workspace summary">
+              <article class="stat-card">
+                <div class="stat-top"><span class="stat-icon stat-icon-lilac">
+                  <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 2.5h6l4 4v11H5z"></path><path d="M11 2.5v4h4M7.5 10h5M7.5 13h5"></path></svg>
+                </span><span class="stat-trend">COLLECTED</span></div>
+                <strong class="stat-value" id="stat-sources">—</strong>
+                <span class="stat-label">Knowledge sources</span>
+              </article>
+              <article class="stat-card">
+                <div class="stat-top"><span class="stat-icon stat-icon-mint">
+                  <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7"></circle><circle cx="10" cy="10" r="3"></circle><path d="M10 3v4m7 3h-4"></path></svg>
+                </span><span class="stat-trend">INDEXED</span></div>
+                <strong class="stat-value" id="stat-chunks">—</strong>
+                <span class="stat-label">Evidence chunks</span>
+              </article>
+              <article class="stat-card">
+                <div class="stat-top"><span class="stat-icon stat-icon-peach">
+                  <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.5 16 5v4.4c0 3.7-2.5 6.6-6 8.1-3.5-1.5-6-4.4-6-8.1V5z"></path><path d="m7.5 9.8 1.7 1.7 3.5-3.7"></path></svg>
+                </span><span class="stat-trend">PROTECTED</span></div>
+                <strong class="stat-value" id="stat-redactions">—</strong>
+                <span class="stat-label">Sensitive details protected</span>
+              </article>
+              <article class="stat-card stat-card-clearance">
+                <div class="stat-top"><span class="stat-icon stat-icon-blue">
+                  <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="6.5" r="3"></circle><path d="M4 17a6 6 0 0 1 12 0"></path></svg>
+                </span><span class="stat-trend">YOUR ACCESS</span></div>
+                <strong class="stat-value stat-value-text" id="stat-clearance">—</strong>
+                <span class="stat-label">Information clearance</span>
+              </article>
+            </div>
+
+            <div class="overview-grid">
+              <section class="panel source-panel" aria-labelledby="recent-sources-title">
+                <div class="panel-heading">
+                  <div><p class="eyebrow">THE KNOWLEDGE BASE</p><h2 id="recent-sources-title">Recent sources</h2></div>
+                  <button class="text-button" type="button" data-view="sources">View all <span aria-hidden="true">→</span></button>
+                </div>
+                <div class="source-list source-list-compact" id="overview-sources"></div>
+              </section>
+
+              <section class="panel search-panel" aria-labelledby="search-title">
+                <div class="panel-heading">
+                  <div><p class="eyebrow">FIND THE THREAD</p><h2 id="search-title">Search knowledge</h2></div>
+                  <span class="search-spark" aria-hidden="true">✳</span>
+                </div>
+                <form id="search-form" class="search-form">
+                  <label class="sr-only" for="search-query">Search project knowledge</label>
+                  <span class="search-icon" aria-hidden="true"><svg viewBox="0 0 20 20"><circle cx="8.7" cy="8.7" r="5.7"></circle><path d="m13 13 4 4"></path></svg></span>
+                  <input id="search-query" type="search" placeholder="Try a project, owner, or decision…" autocomplete="off">
+                  <button type="submit" aria-label="Search">
+                    <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 10h13m-4-4 4 4-4 4"></path></svg>
+                  </button>
+                </form>
+                <p class="search-hint">Search looks through the sources you’re allowed to see.</p>
+                <div class="search-results" id="search-results" aria-live="polite">
+                  <div class="search-empty search-empty-initial"><span class="search-empty-icon">⌕</span><span>Your next answer might already be here.</span></div>
+                </div>
+              </section>
+            </div>
+          </section>
+
+          <section class="page-view" id="sources-view" aria-labelledby="sources-title" hidden>
+            <div class="page-intro">
+              <div>
+                <p class="eyebrow eyebrow-accent">A SHARED MEMORY, WITH PERMISSIONS</p>
+                <h1 id="sources-title">Knowledge sources</h1>
+                <p>Browse the context behind your team's work. Sensitive details are redacted before storage.</p>
+              </div>
+              <span class="source-total"><strong id="source-total">0</strong><span>sources</span></span>
+            </div>
+
+            <section class="panel upload-panel" id="upload-panel" aria-labelledby="upload-title" hidden>
+              <div class="upload-intro">
+                <span class="upload-icon" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="M10 13V3m-4 4 4-4 4 4"></path><path d="M4 12.5v3A1.5 1.5 0 0 0 5.5 17h9a1.5 1.5 0 0 0 1.5-1.5v-3"></path></svg></span>
+                <div><p class="eyebrow">ADD CONTEXT</p><h2 id="upload-title">Bring a source into Baton</h2><p>Markdown, text, CSV, or JSON · up to 1 MB</p></div>
+              </div>
+              <form id="upload-form" class="upload-form">
+                <label class="file-picker" for="source-file">
+                  <span class="file-picker-icon" aria-hidden="true">＋</span>
+                  <span class="file-picker-copy"><strong id="file-name">Choose a file</strong><small id="file-hint">or drop it here</small></span>
+                  <input id="source-file" name="file" type="file" accept=".md,.txt,.csv,.json" required>
+                </label>
+                <label class="select-field" for="clearance-select"><span>Visibility</span>
+                  <select id="clearance-select" name="clearance" required>
+                    <option value="0">Public</option>
+                    <option value="1" selected>Internal</option>
+                    <option value="2">Confidential</option>
+                    <option value="3">Restricted</option>
+                  </select>
+                </label>
+                <label class="select-field select-kind" for="kind-select"><span>Source type</span>
+                  <select id="kind-select" name="kind">
+                    <option value="">Detect automatically</option>
+                    <option value="github">GitHub</option>
+                    <option value="notes">Notes</option>
+                    <option value="tasks">Tasks</option>
+                    <option value="chat">Chat</option>
+                    <option value="leaver_qa">Leaver Q&amp;A</option>
+                  </select>
+                </label>
+                <button class="button button-primary upload-submit" id="upload-button" type="submit">Add source <span aria-hidden="true">↗</span></button>
+              </form>
+              <p class="upload-message" id="upload-message" role="status" aria-live="polite"></p>
+            </section>
+            <div class="permission-note" id="upload-permission-note" hidden>
+              <span aria-hidden="true">◈</span> Source uploads are available to workspace roles with upload permission.
+            </div>
+
+            <section class="panel all-sources-panel" aria-labelledby="all-sources-title">
+              <div class="panel-heading source-table-heading">
+                <div><p class="eyebrow">PROJECT LIBRARY</p><h2 id="all-sources-title">All sources</h2></div>
+                <div class="source-filters">
+                  <label class="filter-search"><span class="sr-only">Filter sources by name</span><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.7" cy="8.7" r="5.7"></circle><path d="m13 13 4 4"></path></svg><input id="source-filter" type="search" placeholder="Filter sources"></label>
+                  <label class="sr-only" for="kind-filter">Filter by source type</label>
+                  <select id="kind-filter" class="filter-select"><option value="">All types</option><option value="github">GitHub</option><option value="notes">Notes</option><option value="tasks">Tasks</option><option value="chat">Chat</option><option value="leaver_qa">Leaver Q&amp;A</option></select>
+                  <label class="sr-only" for="clearance-filter">Filter by visibility</label>
+                  <select id="clearance-filter" class="filter-select"><option value="">All visibility</option><option value="0">Public</option><option value="1">Internal</option><option value="2">Confidential</option><option value="3">Restricted</option></select>
+                </div>
+              </div>
+              <div class="source-list" id="all-sources"></div>
+              <div class="list-footer" id="list-footer"></div>
+            </section>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <dialog class="source-dialog" id="source-dialog" aria-labelledby="detail-title">
+      <div class="dialog-shell">
+        <header class="dialog-header">
+          <div class="dialog-heading">
+            <span class="detail-file-icon" id="detail-icon" aria-hidden="true">S</span>
+            <div><p class="eyebrow">SOURCE DETAILS</p><h2 id="detail-title">Loading source…</h2></div>
+          </div>
+          <button class="icon-button dialog-close" id="detail-close" type="button" aria-label="Close source details">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 5 10 10M15 5 5 15"></path></svg>
+          </button>
+        </header>
+        <div class="detail-meta" id="detail-meta"></div>
+        <div class="detail-content" id="detail-content" aria-live="polite"></div>
+      </div>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+  </body>
+</html>

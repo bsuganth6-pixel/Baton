@@ -14,11 +14,11 @@ Flow: **Connect, Reconstruct, Verify, Review, Handover.** Built solo for CodePun
 | 3 | Extract and verify: LLM claims, exact-quote check, prompt-injection defence, background jobs | next |
 | 4 | Deterministic confidence labels, conflicts, missing-knowledge questions | |
 | 5 | Review API: accept, edit, reject, versions, conflict resolution, answers | |
-| 6 | Dashboard UI (Next.js + Tailwind) | |
+| 6 | Dashboard UI (FastAPI-served HTML, CSS and JavaScript) | done |
 | 7 | Handover views by role, acknowledgement | |
-| 8 | Deployment (Render + Vercel), CI, smoke test, final docs | deployment configuration added; hosted deployment pending |
+| 8 | Deployment (Render + Vercel), CI, smoke test, final docs | API deployed; dashboard is served by the FastAPI app |
 
-Nothing is deployed yet, and no LLM is called yet.
+The dashboard supports sign-in, permission-aware source browsing, search, source details and uploads. No LLM is called yet.
 
 ## Rules the build is held to
 
@@ -52,9 +52,9 @@ Interactive API docs: `http://localhost:8000/api/docs`. With `DEMO_MODE=true` th
 | `successor@baton.example` | successor |
 | `teammate@baton.example` | teammate |
 
-## Deploy the API
+## Deploy Baton
 
-The repository currently contains the FastAPI API only; there is no frontend yet. The same API can be deployed to both providers. Both deployments need a persistent PostgreSQL database with a connection URL reachable from each provider. Do not use SQLite for hosted deployments.
+The FastAPI app serves the interactive dashboard at `/` and the API under `/api`. The same app can be deployed to both providers. Both deployments need a persistent PostgreSQL database with a connection URL reachable from each provider. Do not use SQLite for hosted deployments.
 
 ### Render
 
@@ -62,7 +62,7 @@ Create a new Blueprint from this repository and use the root `render.yaml`. It u
 
 ### Vercel
 
-Import this repository and set **Root Directory** to `backend`. Vercel detects the FastAPI entry point in `index.py`; the `.python-version` file selects Python 3.12. Set these environment variables for the deployment:
+Import this repository and set **Root Directory** to `backend`. Vercel detects the FastAPI entry point in `index.py`; the `.python-version` file selects Python 3.12, and `vercel.json` includes the dashboard assets in the function bundle. Set these environment variables for the deployment:
 
 | Variable | Value |
 |---|---|
@@ -72,7 +72,9 @@ Import this repository and set **Root Directory** to `backend`. Vercel detects t
 | `COOKIE_SECURE` | `true` |
 | `DEMO_MODE` | `false` |
 
-Deploy Render first so its startup applies database migrations; Vercel does not run migrations. Keep `SECRET_KEY` private and set it through each provider's environment settings, not in Git or chat. If a browser frontend is added later, set `ALLOWED_ORIGINS` to its exact HTTPS origin on both deployments.
+Deploy Render first so its startup applies database migrations; Vercel does not run migrations. Keep `SECRET_KEY` private and set it through each provider's environment settings, not in Git or chat. The dashboard is served from the same origin as the API, so no CORS origin is needed. If you host a separate frontend, set `ALLOWED_ORIGINS` to its exact HTTPS origin on both deployments.
+
+The production dashboard requires a provisioned workspace account; public registration is disabled. For local demo accounts and synthetic sources, set `DEMO_MODE=true` and a private `DEMO_PASSWORD` before starting the API.
 
 ## Roles and clearance
 
@@ -126,4 +128,4 @@ The Postgres run wipes the `public` schema of that database, so its name must co
 - Search is a plain substring match, which is fine at demo scale.
 - `audit_log` is append-only by convention; the database does not enforce it.
 - One project per deployment.
-- Not yet verified: real LLM extraction (no API key in the build environment) and the hosted deployment.
+- Not yet verified: real LLM extraction (no API key in the build environment).

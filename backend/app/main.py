@@ -4,10 +4,13 @@ from __future__ import annotations
 import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from sqlalchemy import Engine
 from starlette.middleware.cors import CORSMiddleware
+from starlette.responses import FileResponse
+from starlette.staticfiles import StaticFiles
 
 from app import __version__
 from app.api import auth, health, sources
@@ -19,6 +22,7 @@ from app.ingest.seed import SeedError, seed_demo
 from app.protect.ratelimit import LoginThrottle
 
 BODY_OVERHEAD_BYTES = 65_536  # multipart framing around the largest allowed file
+STATIC_DIR = Path(__file__).with_name("static")
 
 
 def create_app(settings: Settings | None = None, engine: Engine | None = None) -> FastAPI:
@@ -48,6 +52,12 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
     app.state.sessionmaker = sessions
     app.state.login_throttle = LoginThrottle()
     install_error_handlers(app)
+    app.mount("/assets", StaticFiles(directory=STATIC_DIR / "assets"), name="assets")
+
+    @app.get("/", include_in_schema=False)
+    def dashboard() -> FileResponse:
+        return FileResponse(STATIC_DIR / "index.html")
+
     if settings.origins:
         app.add_middleware(
             CORSMiddleware, allow_origins=settings.origins, allow_credentials=True,

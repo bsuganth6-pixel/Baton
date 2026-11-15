@@ -20,6 +20,17 @@ def test_health_reports_ok_with_a_working_database(client: TestClient, path: str
                                "demo_mode": False}
 
 
+def test_dashboard_and_assets_are_served(client: TestClient) -> None:
+    page = client.get("/")
+    stylesheet = client.get("/assets/styles.css")
+    script = client.get("/assets/app.js")
+
+    assert page.status_code == 200 and "text/html" in page.headers["content-type"]
+    assert 'id="login-form"' in page.text and 'id="app-shell"' in page.text
+    assert stylesheet.status_code == 200 and "text/css" in stylesheet.headers["content-type"]
+    assert script.status_code == 200 and "javascript" in script.headers["content-type"]
+
+
 def test_health_is_503_without_leaking_why_when_the_database_is_down(settings: Settings) -> None:
     dead = "postgresql+psycopg2://nobody:hunter2@127.0.0.1:1/none"
     with TestClient(create_app(settings, make_engine(dead))) as client:

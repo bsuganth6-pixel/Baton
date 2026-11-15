@@ -58,7 +58,7 @@ The FastAPI app serves the interactive dashboard at `/` and the API under `/api`
 
 ### Render
 
-Create a new Blueprint from this repository and use the root `render.yaml`. It updates the existing `Baton` web service and creates a free PostgreSQL database in Singapore. The API runs on Render's free web-service plan, and Render runs `alembic upgrade head` before starting it. Render's free database expires after 30 days and is for testing/prototyping, not durable production data.
+Create a new Blueprint from this repository and use the root `render.yaml`. It updates the existing `Baton` web service and creates a free PostgreSQL database in Singapore. The API runs on Render's free web-service plan, and Render runs `alembic upgrade head` before starting it. Set `DEMO_PASSWORD` in the service's Environment settings; the Blueprint intentionally does not store it. Render's free database expires after 30 days and is for testing/prototyping, not durable production data.
 
 ### Vercel
 
@@ -70,11 +70,12 @@ Import this repository and set **Root Directory** to `backend`. Vercel detects t
 | `DATABASE_URL` | The external connection URL for the same Render PostgreSQL database |
 | `SECRET_KEY` | The same randomly generated secret used by Render |
 | `COOKIE_SECURE` | `true` |
-| `DEMO_MODE` | `false` |
+| `DEMO_MODE` | `true` |
+| `DEMO_PASSWORD` | Set the same shared demo password as Render |
 
 Deploy Render first so its startup applies database migrations; Vercel does not run migrations. Keep `SECRET_KEY` private and set it through each provider's environment settings, not in Git or chat. The dashboard is served from the same origin as the API, so no CORS origin is needed. If you host a separate frontend, set `ALLOWED_ORIGINS` to its exact HTTPS origin on both deployments.
 
-The production dashboard requires a provisioned workspace account; public registration is disabled. For local demo accounts and synthetic sources, set `DEMO_MODE=true` and a private `DEMO_PASSWORD` before starting the API.
+In demo mode, the sign-in page offers a button to fill the public demo account. Production seeding creates only `teammate@baton.example` (limited teammate access, internal clearance, no upload permission); local demo mode retains all five role accounts. `DEMO_PASSWORD` is intentionally exposed by the demo-credentials endpoint while demo mode is enabled, so use only synthetic data and a password that is not used elsewhere. Public registration remains disabled.
 
 ## Roles and clearance
 

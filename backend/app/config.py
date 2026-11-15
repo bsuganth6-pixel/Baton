@@ -12,6 +12,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 DRIVER_PREFIX = "postgresql+psycopg2://"
 LOCAL_DATABASE_URL = DRIVER_PREFIX + "baton:baton@localhost:5432/baton"
 REPO_DIR = Path(__file__).resolve().parents[2]
+PUBLIC_DEMO_EMAIL = "teammate@baton.example"
 # Starlette keeps an upload in memory up to 1 MiB and spools anything larger to a temporary file.
 # Staying under that ceiling means an original, unredacted upload is never written to disk.
 UPLOAD_MEMORY_CEILING = 1_048_576

@@ -2,7 +2,15 @@
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
-const state = { user: null, sources: [], view: "overview", searchRequest: 0, toastTimer: 0 };
+const state = {
+  user: null,
+  sources: [],
+  view: "overview",
+  searchRequest: 0,
+  toastTimer: 0,
+  demoMode: false,
+  demoCredentials: null,
+};
 
 class ApiError extends Error {
   constructor(message, status, code) {
@@ -80,12 +88,32 @@ async function checkHealth() {
     const health = await api("/health");
     const online = health.status === "ok" && health.database === "ok";
     setServiceStatus(online, online ? "All systems ready" : "Service needs attention");
-    $("#demo-pill").hidden = !health.demo_mode;
+    state.demoMode = health.demo_mode === true;
+    $("#demo-pill").hidden = !state.demoMode;
     return online;
   } catch {
+    state.demoMode = false;
     setServiceStatus(false, "Connection unavailable");
     $("#demo-pill").hidden = true;
     return false;
+  }
+}
+
+async function loadDemoCredentials() {
+  const panel = $("#demo-access");
+  panel.hidden = !state.demoMode;
+  state.demoCredentials = null;
+  if (!state.demoMode) return;
+
+  try {
+    state.demoCredentials = await api("/api/auth/demo-credentials");
+    $("#demo-email").textContent = state.demoCredentials.email;
+    $("#demo-access-message").hidden = true;
+    $("#demo-fill-button").disabled = false;
+  } catch (error) {
+    $("#demo-email").textContent = "Unavailable";
+    $("#demo-access-message").textContent = error.message;
+    $("#demo-access-message").hidden = false;
   }
 }
 
@@ -373,6 +401,7 @@ async function uploadSource(event) {
 
 async function restoreSession() {
   await checkHealth();
+  await loadDemoCredentials();
   try {
     const user = await api("/api/auth/me");
     showWorkspace(user);
@@ -419,6 +448,13 @@ $("#password-toggle").addEventListener("click", event => {
   input.type = showing ? "password" : "text";
   event.currentTarget.textContent = showing ? "Show" : "Hide";
   event.currentTarget.setAttribute("aria-label", showing ? "Show password" : "Hide password");
+});
+
+$("#demo-fill-button").addEventListener("click", () => {
+  if (!state.demoCredentials) return;
+  $("#email").value = state.demoCredentials.email;
+  $("#password").value = state.demoCredentials.password;
+  $("#email").focus();
 });
 
 $("#logout-button").addEventListener("click", async () => {

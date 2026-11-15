@@ -30,6 +30,11 @@ class LoginOut(BaseModel):
     user: UserOut
 
 
+class DemoCredentialsOut(BaseModel):
+    email: str
+    password: str
+
+
 class SourceOut(BaseModel):
     id: int
     name: str

@@ -9,7 +9,7 @@ from sqlalchemy import LargeBinary, func, select
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
-from app.config import Settings
+from app.config import PUBLIC_DEMO_EMAIL, Settings
 from app.db import make_sessionmaker
 from app.ingest import service
 from app.ingest.seed import DEMO_USERS, SeedError, SeedReport, seed_demo
@@ -111,6 +111,17 @@ def test_demo_users_get_their_roles_and_a_changed_password_is_applied(
     assert changed.users_updated == 5
     with Session(engine) as db:
         assert all(verify_password("a-new-demo-password", u.password_hash) for u in db.scalars(select(User)))
+
+
+def test_production_demo_seed_creates_only_the_limited_demo_user(
+    engine: Engine, settings: Settings
+) -> None:
+    production = demo_settings(settings).model_copy(update={"app_env": "production"})
+    seed_demo(make_sessionmaker(engine), production)
+    with Session(engine) as db:
+        stored = db.scalars(select(User)).all()
+    assert [(user.email, user.role) for user in stored] == [(PUBLIC_DEMO_EMAIL, Role.TEAMMATE)]
+    assert verify_password(settings.demo_password, stored[0].password_hash)
 
 
 def test_a_missing_manifest_is_reported_not_swallowed(engine: Engine, settings: Settings, tmp_path: Any) -> None:

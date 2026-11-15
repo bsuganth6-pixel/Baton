@@ -108,6 +108,15 @@ button { cursor: pointer; }
 .button-wide svg { margin-left: auto; }
 .form-message { min-height: 18px; margin: 11px 0 0; color: #a84740; font-size: 12px; line-height: 1.5; }
 .form-message.is-success { color: #21836c; }
+.demo-access { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; padding: 14px; border: 1px solid #f0ddbc; border-radius: 10px; background: #fffaf1; }
+.demo-access-copy { min-width: 190px; }
+.demo-access-copy .eyebrow { margin: 0 0 5px; color: #9b7041; font-size: 9px; }
+.demo-access-copy > p:not(.eyebrow) { margin: 0; color: #69758a; font-size: 11px; line-height: 1.5; }
+.demo-access-copy strong { color: var(--ink); }
+.demo-access-copy .demo-access-message { margin-top: 5px; color: #a84740; }
+.demo-fill-button { flex: 0 0 auto; padding: 8px 11px; border: 1px solid #e8c995; border-radius: 7px; color: #75552f; background: #fff; font-size: 10px; font-weight: 700; }
+.demo-fill-button:hover:not(:disabled) { background: #fff4df; }
+.demo-fill-button:disabled { cursor: not-allowed; opacity: .6; }
 .auth-note { display: flex; gap: 12px; align-items: flex-start; margin-top: 18px; padding: 14px; border: 1px solid #eeeff4; border-radius: 10px; background: #fafbfc; }
 .auth-note p { margin: 1px 0 0; color: #7c8798; font-size: 11px; line-height: 1.65; }
 .note-icon { flex: 0 0 20px; width: 20px; height: 20px; color: #71bda7; }

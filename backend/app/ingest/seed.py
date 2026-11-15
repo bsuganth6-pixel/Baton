@@ -16,7 +16,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, sessionmaker
 
 from app import audit
-from app.config import REPO_DIR, Settings
+from app.config import PUBLIC_DEMO_EMAIL, REPO_DIR, Settings
 from app.ingest.service import ingest_upload
 from app.models import Project, Role, SourceKind, User
 from app.protect.auth import hash_password, verify_password
@@ -28,7 +28,7 @@ DEMO_USERS: tuple[tuple[str, str, Role], ...] = (
     ("manager@baton.example", "Meera Iyer", Role.MANAGER),
     ("leaver@baton.example", "Arjun Mehta", Role.LEAVER),
     ("successor@baton.example", "Priya Nair", Role.SUCCESSOR),
-    ("teammate@baton.example", "Rohan Desai", Role.TEAMMATE),
+    (PUBLIC_DEMO_EMAIL, "Rohan Desai", Role.TEAMMATE),
 )
 
 
@@ -55,7 +55,10 @@ def _ensure_project(db: Session, spec: dict[str, Any]) -> Project:
 
 
 def _ensure_users(db: Session, settings: Settings, report: SeedReport) -> None:
-    for email, name, role in DEMO_USERS:
+    users = DEMO_USERS
+    if settings.app_env == "production":
+        users = tuple(user for user in DEMO_USERS if user[0] == PUBLIC_DEMO_EMAIL and user[2] == Role.TEAMMATE)
+    for email, name, role in users:
         user = db.scalar(select(User).where(User.email == email))
         if user is None:
             db.add(User(email=email, name=name, role=role,

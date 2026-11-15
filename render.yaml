@@ -22,7 +22,9 @@ services:
       - key: COOKIE_SECURE
         value: "true"
       - key: DEMO_MODE
-        value: "false"
+        value: "true"
+      - key: DEMO_PASSWORD
+        sync: false
 
 databases:
   - name: baton-postgres

@@ -11,7 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
-from app.config import Settings
+from app.config import PUBLIC_DEMO_EMAIL, Settings
 from app.main import create_app
 from app.models import AuditLog, Role, User
 from app.protect.auth import create_access_token
@@ -67,6 +67,22 @@ def test_logout_clears_the_cookie(client: TestClient, users: dict[Role, User]) -
     login(client, Role.MANAGER)
     assert client.post("/api/auth/logout").status_code == 204
     assert client.get("/api/auth/me").status_code == 401
+
+
+def test_demo_credentials_are_hidden_when_demo_mode_is_disabled(client: TestClient) -> None:
+    response = client.get("/api/auth/demo-credentials")
+    assert response.status_code == 404
+    assert response.json()["error"]["code"] == "demo_unavailable"
+
+
+def test_demo_credentials_are_returned_only_in_demo_mode(
+    engine: Engine, settings: Settings
+) -> None:
+    demo = settings.model_copy(update={"demo_mode": True})
+    with TestClient(create_app(demo, engine)) as client:
+        response = client.get("/api/auth/demo-credentials")
+    assert response.status_code == 200
+    assert response.json() == {"email": PUBLIC_DEMO_EMAIL, "password": settings.demo_password}
 
 
 def test_wrong_password_and_unknown_email_look_identical(client: TestClient, users: dict[Role, User]) -> None:

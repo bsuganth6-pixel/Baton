@@ -8,8 +8,8 @@ from sqlalchemy.orm import Session
 from app import audit
 from app.api.deps import SESSION_COOKIE, current_user, get_db, get_settings_dep
 from app.api.errors import ApiError
-from app.api.schemas import LoginIn, LoginOut, UserOut
-from app.config import Settings
+from app.api.schemas import DemoCredentialsOut, LoginIn, LoginOut, UserOut
+from app.config import PUBLIC_DEMO_EMAIL, Settings
 from app.models import User
 from app.protect.acl import ROLE_PERMISSIONS, clearance_for
 from app.protect.auth import create_access_token, spend_the_same_time, verify_password
@@ -56,6 +56,13 @@ def login(
 @router.post("/logout", status_code=204)
 def logout(response: Response) -> None:
     response.delete_cookie(SESSION_COOKIE, path="/")
+
+
+@router.get("/demo-credentials", response_model=DemoCredentialsOut)
+def demo_credentials(settings: Settings = Depends(get_settings_dep)) -> DemoCredentialsOut:
+    if not settings.demo_mode or not settings.demo_password:
+        raise ApiError(404, "demo_unavailable", "Demo credentials are unavailable.")
+    return DemoCredentialsOut(email=PUBLIC_DEMO_EMAIL, password=settings.demo_password)
 
 
 @router.get("/me", response_model=UserOut)

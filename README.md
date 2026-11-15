@@ -75,7 +75,7 @@ Import this repository and set **Root Directory** to `backend`. Vercel detects t
 
 Deploy Render first so its startup applies database migrations; Vercel does not run migrations. Keep `SECRET_KEY` private and set it through each provider's environment settings, not in Git or chat. The dashboard is served from the same origin as the API, so no CORS origin is needed. If you host a separate frontend, set `ALLOWED_ORIGINS` to its exact HTTPS origin on both deployments.
 
-In demo mode, the sign-in page offers a button to fill the public demo account. Production seeding creates only `teammate@baton.example` (limited teammate access, internal clearance, no upload permission); local demo mode retains all five role accounts. `DEMO_PASSWORD` is intentionally exposed by the demo-credentials endpoint while demo mode is enabled, so use only synthetic data and a password that is not used elsewhere. Public registration remains disabled.
+In demo mode, the sign-in page offers a **Demo login** button that signs directly into the public demo account. Production seeding creates only `teammate@baton.example` (limited teammate access, internal clearance, no upload permission); local demo mode retains all five role accounts. `DEMO_PASSWORD` is intentionally exposed by the demo-credentials endpoint while demo mode is enabled, so use only synthetic data and a password that is not used elsewhere. Public registration remains disabled.
 
 ## Roles and clearance
 

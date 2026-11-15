@@ -101,7 +101,10 @@ async function checkHealth() {
 
 async function loadDemoCredentials() {
   const panel = $("#demo-access");
+  const loginButton = $("#demo-login-button");
   panel.hidden = !state.demoMode;
+  loginButton.hidden = !state.demoMode;
+  loginButton.disabled = true;
   state.demoCredentials = null;
   if (!state.demoMode) return;
 
@@ -109,7 +112,7 @@ async function loadDemoCredentials() {
     state.demoCredentials = await api("/api/auth/demo-credentials");
     $("#demo-email").textContent = state.demoCredentials.email;
     $("#demo-access-message").hidden = true;
-    $("#demo-fill-button").disabled = false;
+    loginButton.disabled = false;
   } catch (error) {
     $("#demo-email").textContent = "Unavailable";
     $("#demo-access-message").textContent = error.message;
@@ -420,6 +423,7 @@ $("#login-form").addEventListener("submit", async event => {
   const message = $("#auth-message");
   const previousLabel = label.textContent;
   button.disabled = true;
+  $("#demo-login-button").disabled = true;
   label.textContent = "Signing in…";
   message.textContent = "";
 
@@ -438,6 +442,7 @@ $("#login-form").addEventListener("submit", async event => {
     message.classList.remove("is-success");
   } finally {
     button.disabled = false;
+    $("#demo-login-button").disabled = !state.demoCredentials;
     label.textContent = previousLabel;
   }
 });
@@ -450,11 +455,11 @@ $("#password-toggle").addEventListener("click", event => {
   event.currentTarget.setAttribute("aria-label", showing ? "Show password" : "Hide password");
 });
 
-$("#demo-fill-button").addEventListener("click", () => {
+$("#demo-login-button").addEventListener("click", () => {
   if (!state.demoCredentials) return;
   $("#email").value = state.demoCredentials.email;
   $("#password").value = state.demoCredentials.password;
-  $("#email").focus();
+  $("#login-form").requestSubmit();
 });
 
 $("#logout-button").addEventListener("click", async () => {

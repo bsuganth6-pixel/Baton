@@ -68,10 +68,13 @@
               <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required>
               <button class="password-toggle" id="password-toggle" type="button" aria-label="Show password">Show</button>
             </div>
-            <button class="button button-primary button-wide" id="login-button" type="submit">
-              <span>Sign in to Baton</span>
-              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11m-4-4 4 4-4 4"></path></svg>
-            </button>
+            <div class="login-actions">
+              <button class="button button-primary button-wide" id="login-button" type="submit">
+                <span>Sign in to Baton</span>
+                <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11m-4-4 4 4-4 4"></path></svg>
+              </button>
+              <button class="demo-login-button" id="demo-login-button" type="button" aria-label="Sign in directly with the demo account" hidden disabled>Demo login</button>
+            </div>
             <p class="form-message" id="auth-message" role="status" aria-live="polite"></p>
           </form>
           <section class="demo-access" id="demo-access" aria-label="Demo workspace sign-in" hidden>
@@ -80,7 +83,6 @@
               <p>Limited workspace access as <strong id="demo-email"></strong>.</p>
               <p class="demo-access-message" id="demo-access-message" role="status" hidden></p>
             </div>
-            <button class="demo-fill-button" id="demo-fill-button" type="button" disabled>Use demo account</button>
           </section>
           <div class="auth-note">
             <span class="note-icon" aria-hidden="true">

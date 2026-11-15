@@ -16,7 +16,7 @@ Flow: **Connect, Reconstruct, Verify, Review, Handover.** Built solo for CodePun
 | 5 | Review API: accept, edit, reject, versions, conflict resolution, answers | |
 | 6 | Dashboard UI (Next.js + Tailwind) | |
 | 7 | Handover views by role, acknowledgement | |
-| 8 | Deployment (Render + Vercel), CI, smoke test, final docs | |
+| 8 | Deployment (Render + Vercel), CI, smoke test, final docs | deployment configuration added; hosted deployment pending |
 
 Nothing is deployed yet, and no LLM is called yet.
 
@@ -51,6 +51,28 @@ Interactive API docs: `http://localhost:8000/api/docs`. With `DEMO_MODE=true` th
 | `leaver@baton.example` | leaver |
 | `successor@baton.example` | successor |
 | `teammate@baton.example` | teammate |
+
+## Deploy the API
+
+The repository currently contains the FastAPI API only; there is no frontend yet. The same API can be deployed to both providers. Both deployments need a persistent PostgreSQL database with a connection URL reachable from each provider. Do not use SQLite for hosted deployments.
+
+### Render
+
+Create a new Blueprint from this repository and use the root `render.yaml`. It updates the existing `Baton` web service and creates a free PostgreSQL database in Singapore. The API runs on Render's free web-service plan, and Render runs `alembic upgrade head` before starting it. Render's free database expires after 30 days and is for testing/prototyping, not durable production data.
+
+### Vercel
+
+Import this repository and set **Root Directory** to `backend`. Vercel detects the FastAPI entry point in `index.py`; the `.python-version` file selects Python 3.12. Set these environment variables for the deployment:
+
+| Variable | Value |
+|---|---|
+| `APP_ENV` | `production` |
+| `DATABASE_URL` | The external connection URL for the same Render PostgreSQL database |
+| `SECRET_KEY` | The same randomly generated secret used by Render |
+| `COOKIE_SECURE` | `true` |
+| `DEMO_MODE` | `false` |
+
+Deploy Render first so its startup applies database migrations; Vercel does not run migrations. Keep `SECRET_KEY` private and set it through each provider's environment settings, not in Git or chat. If a browser frontend is added later, set `ALLOWED_ORIGINS` to its exact HTTPS origin on both deployments.
 
 ## Roles and clearance
 

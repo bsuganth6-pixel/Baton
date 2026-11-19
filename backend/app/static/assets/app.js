@@ -1079,9 +1079,9 @@ async function askAssistant(event) {
     const answer = await api("/api/assistant/ask", {
       method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question }),
     });
-    state.thread.at(-1) = { role: "assistant", text: answer.answer, citations: answer.citations, refused: answer.refused };
+     state.thread[state.thread.length - 1] = { role: "assistant", text: answer.answer, citations: answer.citations, refused: answer.refused };
   } catch (error) {
-    state.thread.at(-1) = { role: "assistant", text: error.message, refused: true };
+     state.thread[state.thread.length - 1] = { role: "assistant", text: error.message, refused: true };
   } finally {
     button.disabled = false;
     renderChat();

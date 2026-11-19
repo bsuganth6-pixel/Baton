@@ -44,3 +44,37 @@ Decisions
 13. Additions outside the given tree: `CHANGELOG.md`, `.gitleaks.toml`, `backend/pytest.ini`, `demo-data/README.md`.
 
 Deferred by the build order: `docker-compose.yml`, `render.yaml`, `vercel.json`, CI and the frontend.
+
+## Step 3: Extract & verify — LLM pipeline and deterministic confidence
+
+Decisions
+
+1. **Hybrid LLM strategy.** Anthropic API calls via `ANTHROPIC_API_KEY` (`ANTHROPIC_BASE_URL`, `ANTHROPIC_MODEL`) for extraction and assistant; fall back to a deterministic rule-based extractor when no key, quota error, or timeout, so the full workflow always works for the demo.
+2. **Prompt-injection defence.** Chunk text passed as data inside `<chunk>` delimiters — never raw source text as instructions. The `confidence.py` labels are always deterministic; the LLM output is verified and never used for labels.
+3. **Exact-quote verification.** Every claim citation must be an exact substring of the cited chunk; unverifiable claims are dropped and counted as "dropped" in the pipeline result. This is the single most important guard against hallucination.
+4. **Deterministic confidence labels.** Precedence: Missing > Conflicting > Stale > Supported > Single source; `normalize_value` canonicalises decoys (different words, same value). Labels never come from the LLM.
+5. **Background job via in-process async task runner.** `Job` model already supports `status`/`stage`/`result`; pipeline runs synchronously in a single process, matching the current design. No distributed job queue is needed for the demo.
+6. **Source citations are verified at claim-creation time.** The pipeline stores `Claim.evidence` with `chunk_id` and `quote`; the UI can display quote-vs-chunk verification status.
+7. **Confidence engine normalises values before comparison.** Shared values expressed in different words are recognised as agreeing (e.g. "NYC" and "New York City" both map to "New York City" after canonicalisation).
+
+## Step 4: Conflicts, missing knowledge, and questions
+
+Decisions
+
+1. **Missing-knowledge questions.** Leavers and managers may submit questions about knowledge gaps; these appear in the Questions workspace and are answerable by managers and above.
+2. **Confidence-driven question generation.** Questions are auto-generated from label distribution: if a claim is `Missing` or `Single source`, a corresponding question is emitted so the successor has a structured way to fill gaps.
+3. **Conflict dashboard.** Side-by-side display of conflicting claim values; reviewers can accept one value and reject others, or mark the conflict as resolved.
+4. **SHOW_WITHHELD_COUNT flag.** Sources above a viewer's clearance are never counted or listed; `SHOW_WITHHELD_COUNT` (default true) switches between showing withheld counts and hiding them entirely, read from environment in phase 7.
+5. **Claim versioning on review.** `Claim.version` increments on every review action (created, edited, accepted, rejected); `claim_versions` keeps one snapshot per version for auditability.
+6. **Evidence-backed answers.** The `/api/assistant/ask` endpoint requires an evidence quote (verified substring in chunk) before returning an answer; audit logging records every answer with source citations.
+
+## Recent changes (completed phases)
+
+| Phase | What | State |
+|---|---|---|
+| 3 | LLM extraction + verification + background jobs | done |
+| 4 | Deterministic confidence labels, conflicts, missing-knowledge questions | done |
+| 5 | Review API: accept/reject/edit, versions, conflict resolution, answers | done |
+| 6 | Dashboard UI (vanilla JS SPA, all views) | done |
+| 7 | Handover views by role, acknowledgement with `view_sha256` | done |
+| 8 | Deployment (Render + Vercel config, smoke test, final docs) | done — full-stack verified, tests pass (2 env‑blocked psycopg2 failures remain) |

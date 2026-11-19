@@ -366,6 +366,8 @@ class Question(Base):
     answered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     answer_source_id: Mapped[int | None] = mapped_column(ForeignKey("sources.id", ondelete="SET NULL"))
     created_at: Mapped[created]
+    claim: Mapped[Claim | None] = relationship()
+    conflict: Mapped[Conflict | None] = relationship()
 
 
 class Acknowledgement(Base):

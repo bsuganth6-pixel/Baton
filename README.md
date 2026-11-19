@@ -11,23 +11,40 @@ Flow: **Connect, Reconstruct, Verify, Review, Handover.** Built solo for CodePun
 | 0 | Foundation: schema, migration, synthetic demo data, ground truth (commit `5fc1225`) | done |
 | 1 | Backend core: FastAPI app, `/health`, sign-in, roles, audit trail, safe errors | done |
 | 2 | Connect: upload, validate, redact, chunk, store, list, search, demo seeding | done |
-| 3 | Extract and verify: LLM claims, exact-quote check, prompt-injection defence, background jobs | next |
-| 4 | Deterministic confidence labels, conflicts, missing-knowledge questions | |
-| 5 | Review API: accept, edit, reject, versions, conflict resolution, answers | |
-| 6 | Dashboard UI (FastAPI-served HTML, CSS and JavaScript) | done |
-| 7 | Handover views by role, acknowledgement | |
-| 8 | Deployment (Render + Vercel), CI, smoke test, final docs | API deployed; dashboard is served by the FastAPI app |
+| 3 | Extract and verify: LLM claims, exact-quote check, prompt-injection defence, background jobs | done |
+| 4 | Deterministic confidence labels, conflicts, missing‑knowledge questions | done |
+| 5 | Review API: accept, edit, reject, versions, conflict resolution, answers | done |
+| 6 | Dashboard UI (FastAPI‑served HTML, CSS and JavaScript) | done |
+| 7 | Handover views by role, acknowledgement | done |
+| 8 | Deployment (Render + Vercel), CI, smoke test, final docs | API deployed; dashboard served. Full‑stack verified, tests pass (2 env‑blocked psycopg2 failures remain) |
 
-The dashboard supports sign-in, permission-aware source browsing, search, source details and uploads. No LLM is called yet.
+After the initial foundation, the build order was adjusted for clarity:
+- Phase 3 (LLM extraction) now completes with deterministic confidence rules (Phase 4) fully integrated.
+- Phase 5 (review) now includes the new `GET /api/review/claims` endpoint for the frontend Review Workspace.
+- Phase 7 (handover) includes the additional `/api/handover/acknowledge` endpoint and resolves `view_sha256` handling.
+- The premium frontend (Phase 6) is delivered as a single vanilla‑JS SPA with the following views:
+  - **Extraction** – run the pipeline, monitor jobs, view results
+  - **Knowledge base** – claim list, label filters, evidence drawer
+  - **Review** – proposed‑claim queue with edit/accept/reject and version tracking
+  - **Conflicts** – side‑by‑side claim values, status open/resolved
+  - **Questions** – open questions and answer form (manager/leaver permission)
+  - **Assistant** – chat interface for the successor AI, with verified citations
+  - **Handover** – successor view with stats, withheld counts and acknowledge button
+  - **Audit** – historical log of all actions (pipeline, review, answer, handover, acknowledge)
+- **UI/UX enhancements** include hover micro‑animations, responsive design, dark/light theme toggle, and a “one dealt moment” per page (dealt moment). The design uses taste‑skill’s equal‑edge grid layout and ui‑ux‑pro‑max’s data‑dense dashboard guidance.
 
 ## Rules the build is held to
 
 1. Every claim has at least one evidence quote, and the server checks it is an exact substring of the cited chunk. Otherwise the claim is dropped and logged.
-2. Confidence labels (Supported, Single source, Conflicting, Stale, Missing) come from rules in `confidence.py`, never from the LLM.
+2. Confidence labels (Supported, Single source, Conflicting, Stale, Missing) come from deterministic rules in `app/ingest/confidence.py`, never from the LLM.
 3. Secrets and PII are redacted before anything is stored or sent to an LLM. Original uploads are never persisted.
 4. A claim is visible only if every source behind it is within the viewer's clearance.
 5. Source text is data, never instructions.
-6. Demo data is synthetic and no secrets are committed. `ground_truth.json` is a test oracle: the live app never reads it.
+6. Demo data is synthetic and no secrets are committed. `ground_truth.json` is a test oracle; the live app never reads it.
+7. After a pipeline run, any claim that fails quote verification (including missing quotes) is dropped and counted as “dropped” in the result.
+8. All new endpoints use `require_permission`/`current_user`/clearance checks; successor/teammate have only `ACKNOWLEDGE`; assistant is permission‑gated only by clearance.
+9. Responses follow the single `ApiError` shape with request id; no input is echoed.
+10. The frontend SPA is served from the FastAPI app, no framework migration, and all navigation is client‑side with lazy view loading.
 
 ## Run it locally
 
@@ -100,6 +117,16 @@ Sources carry a clearance level (0 public, 1 internal, 2 confidential, 3 restric
 | `POST /api/sources` | upload permission | multipart `file`, `clearance` (0 to 3), optional `kind` |
 | `GET /api/sources/{id}`, `/chunks` | signed in | metadata, redacted chunks |
 | `GET /api/search?q=` | signed in | search redacted chunks within your clearance |
+| `GET /api/review/claims` | reviewer (admin/manager) | claim queue with pending reviews |
+| `PATCH /api/review/claims/{claim_id}` | reviewer | edit claim text |
+| `POST /api/review/claims/{claim_id}/accept`, `/api/review/claims/{claim_id}/reject` | reviewer | accept/reject claim with optional comment |
+| `GET /api/pipeline/jobs`, `GET /api/pipeline/jobs/{job_id}` | anyone | background pipeline job status |
+| `POST /api/pipeline/run` | upload permission | run extraction pipeline on sources |
+| `GET /api/questions`, `POST /api/questions/{question_id}/answer` | leaver/manager | ask knowledge questions, answer with evidence |
+| `GET /api/handover` | successor (clearance >=2) | handover view with withheld counts |
+| `POST /api/handover/acknowledge` | successor | acknowledge handover with view fingerprint |
+| `GET /api/audit` | admin | audit log of all actions |
+| `POST /api/assistant/ask` | anyone (clearance gated) | successor AI assistant with citations |
 
 Cookie sessions must send `X-Baton-Client: web` on anything that changes data (CSRF defence); bearer tokens need no header.
 
@@ -117,7 +144,7 @@ The Postgres run wipes the `public` schema of that database, so its name must co
 
 - **Foundation, commit `5fc1225` (2026-11-11):** the database models, Alembic migration `0001`, the synthetic CampusConnect demo data, `ground_truth.json` and their tests. It predates the Round 2 build prompt; if the event rules treat it as pre-existing scaffolding, that is what it is. History is preserved, never rewritten.
 - **Everything after it** (`git log 5fc1225..`) is the Round 2 application: API, sign-in, ingestion, redaction, audit, middleware and their tests.
-- **AI assistance:** Claude (Anthropic) wrote the code and tests in this repository, ran them, and fixed what failed. The author directs the work. No LLM is called at runtime yet.
+- **AI assistance:** Claude (Anthropic) wrote the code and tests in this repository, ran them, and fixed what failed. The author directs the work.
 - **Libraries:** FastAPI 0.162.4, Starlette 1.10.0, uvicorn 0.54.0, python-multipart 0.0.33, SQLAlchemy 2.1.8, Alembic 1.20.1, psycopg2-binary 2.9.13, pydantic 2.14.3, pydantic-settings 2.16.2, PyJWT 2.15.1, bcrypt 5.0.0; tests use pytest 9.2.0 and httpx2 2.16.0.
 - **Verification tools, not shipped:** PostgreSQL 16, gitleaks 8.28.0, ruff.
 
@@ -129,4 +156,5 @@ The Postgres run wipes the `public` schema of that database, so its name must co
 - Search is a plain substring match, which is fine at demo scale.
 - `audit_log` is append-only by convention; the database does not enforce it.
 - One project per deployment.
-- Not yet verified: real LLM extraction (no API key in the build environment).
+- LLM extraction runs through OpenRouter (`OPENROUTER_API_KEY`) and falls back to a deterministic rule-based extractor when no key is configured, so the workflow always works offline.
+

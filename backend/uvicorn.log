@@ -1,0 +1,46 @@
+INFO:     Started server process [26519]
+INFO:     Waiting for application startup.
+2026-11-18 19:22:45,199 INFO baton.seed [-] demo seed: SeedReport(users_created=0, users_updated=0, sources_created=0, sources_existing=9)
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:58602 - "GET /health HTTP/1.1" 200 OK
+2026-11-18 19:22:45,418 INFO baton.access [b4dc60a403b2485d] GET /health -> 200 in 68ms
+INFO:     127.0.0.1:46420 - "POST /api/auth/login HTTP/1.1" 200 OK
+2026-11-18 19:23:08,274 INFO baton.access [886034d47f074eb2] POST /api/auth/login -> 200 in 413ms
+2026-11-18 19:23:59,586 WARNING baton.llm [6fb2523add5b4b4e] llm output was not valid JSON; dropping all claims
+2026-11-18 19:23:59,602 WARNING baton.pipeline [6fb2523add5b4b4e] pipeline: LLM returned no usable claims, falling back to the deterministic extractor
+2026-11-18 19:23:59,621 INFO baton.pipeline [6fb2523add5b4b4e] pipeline job=df32d9a1-c6b5-4cf9-b1f2-6aee6076244e engine=rules extracted=27
+INFO:     127.0.0.1:46426 - "POST /api/pipeline/run HTTP/1.1" 200 OK
+2026-11-18 19:23:59,796 INFO baton.access [6fb2523add5b4b4e] POST /api/pipeline/run -> 200 in 51479ms
+INFO:     127.0.0.1:41760 - "POST /api/auth/login HTTP/1.1" 200 OK
+2026-11-18 19:24:31,344 INFO baton.access [ad5ce7c1b80d4ecb] POST /api/auth/login -> 200 in 503ms
+INFO:     127.0.0.1:41764 - "GET /api/review/claims HTTP/1.1" 200 OK
+2026-11-18 19:24:31,522 INFO baton.access [b538f64f3d1747c0] GET /api/review/claims -> 200 in 122ms
+INFO:     127.0.0.1:41774 - "GET /api/review/claims HTTP/1.1" 200 OK
+2026-11-18 19:24:31,616 INFO baton.access [46ca5ae27ea94baf] GET /api/review/claims -> 200 in 50ms
+INFO:     127.0.0.1:41788 - "POST /api/review/claims/22/accept HTTP/1.1" 200 OK
+2026-11-18 19:24:31,681 INFO baton.access [7105b36512884b5c] POST /api/review/claims/22/accept -> 200 in 36ms
+INFO:     127.0.0.1:41800 - "POST /api/auth/login HTTP/1.1" 200 OK
+2026-11-18 19:24:32,194 INFO baton.access [aef479c2aa544d7a] POST /api/auth/login -> 200 in 396ms
+INFO:     127.0.0.1:41816 - "GET /api/handover HTTP/1.1" 200 OK
+2026-11-18 19:24:32,348 INFO baton.access [6c51a820fec64777] GET /api/handover -> 200 in 106ms
+INFO:     127.0.0.1:41828 - "POST /api/auth/login HTTP/1.1" 200 OK
+2026-11-18 19:24:32,866 INFO baton.access [97466998b66e4920] POST /api/auth/login -> 200 in 364ms
+INFO:     127.0.0.1:41836 - "GET /api/audit HTTP/1.1" 200 OK
+2026-11-18 19:24:32,973 INFO baton.access [a3725c4291694f88] GET /api/audit -> 200 in 53ms
+INFO:     127.0.0.1:41846 - "POST /api/assistant/ask HTTP/1.1" 200 OK
+2026-11-18 19:24:33,082 INFO baton.access [ed6143621413468d] POST /api/assistant/ask -> 200 in 72ms
+INFO:     127.0.0.1:51100 - "POST /api/auth/login HTTP/1.1" 200 OK
+2026-11-18 19:25:13,038 INFO baton.access [ae5d1c0fabb24a66] POST /api/auth/login -> 200 in 448ms
+INFO:     127.0.0.1:51112 - "GET /api/handover HTTP/1.1" 200 OK
+2026-11-18 19:25:13,155 INFO baton.access [2847edd259224740] GET /api/handover -> 200 in 65ms
+INFO:     127.0.0.1:57316 - "POST /api/auth/login HTTP/1.1" 200 OK
+2026-11-18 19:25:33,234 INFO baton.access [36376d44500c4cec] POST /api/auth/login -> 200 in 382ms
+INFO:     127.0.0.1:57332 - "POST /api/handover/acknowledge HTTP/1.1" 200 OK
+2026-11-18 19:25:33,512 INFO baton.access [7814fe0713074004] POST /api/handover/acknowledge -> 200 in 73ms
+INFO:     127.0.0.1:57336 - "POST /api/handover/acknowledge HTTP/1.1" 409 Conflict
+2026-11-18 19:25:33,756 INFO baton.access [e18ceea1935c4fdb] POST /api/handover/acknowledge -> 409 in 68ms
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [26519]

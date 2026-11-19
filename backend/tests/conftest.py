@@ -93,6 +93,9 @@ def engine(db_url: str) -> Iterator[Engine]:
             dbapi_connection.isolation_level = None
             cursor = dbapi_connection.cursor()
             cursor.execute("PRAGMA foreign_keys=ON")
+            # WAL lets the app's write session proceed while a test session still holds a read transaction.
+            cursor.execute("PRAGMA journal_mode=WAL")
+            cursor.execute("PRAGMA busy_timeout=5000")
             cursor.close()
 
         @event.listens_for(eng, "begin")

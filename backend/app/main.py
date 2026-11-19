@@ -13,7 +13,8 @@ from starlette.responses import FileResponse
 from starlette.staticfiles import StaticFiles
 
 from app import __version__
-from app.api import auth, health, sources
+from app.api import audit as audit_api
+from app.api import assistant, auth, handover, health, pipeline, questions, review, sources
 from app.api.errors import install_error_handlers
 from app.api.middleware import RequestContextMiddleware, configure_logging
 from app.config import Settings, get_settings
@@ -66,6 +67,6 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
         )
     # Added last, so it is outermost: ids, size limit and security headers cover every response.
     app.add_middleware(RequestContextMiddleware, max_body_bytes=settings.max_upload_bytes + BODY_OVERHEAD_BYTES)
-    for module in (health, auth, sources):
+    for module in (health, auth, sources, pipeline, audit_api, review, questions, handover, assistant):
         app.include_router(module.router)
     return app

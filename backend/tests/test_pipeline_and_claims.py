@@ -122,3 +122,18 @@ def test_claims_start_as_proposed(session: Session, client: TestClient, bearer: 
     client.post("/api/pipeline/run", headers=_admin(bearer))
     claims = session.scalars(select(Claim)).all()
     assert all(c.review_status.value == "proposed" for c in claims)
+
+
+def test_pipeline_result_identifies_engine(client: TestClient, bearer: Headers, seeded: SeedReport) -> None:
+    """Every pipeline run reports its engine: 'rules' (no key) or 'llm'."""
+    body = client.post("/api/pipeline/run", headers=_admin(bearer)).json()
+    assert body["engine"] in ("rules", "llm")
+
+
+def test_job_result_records_engine(client: TestClient, bearer: Headers, seeded: SeedReport) -> None:
+    """The Job.result stored in the database includes the execution engine."""
+    client.post("/api/pipeline/run", headers=_admin(bearer))
+    listed = client.get("/api/pipeline/jobs", headers=_admin(bearer)).json()
+    pipeline_jobs = [j for j in listed if j["kind"] == "pipeline"]
+    detail = client.get(f"/api/pipeline/jobs/{pipeline_jobs[0]['id']}", headers=_admin(bearer)).json()
+    assert detail["result"]["engine"] in ("rules", "llm")

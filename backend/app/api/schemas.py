@@ -145,6 +145,7 @@ class PipelineRunIn(BaseModel):
 class PipelineResultOut(BaseModel):
     job_id: str
     status: str
+    engine: str  # "llm", "rules", or "failed"
     claims: int
     evidence: int
     conflicts: int

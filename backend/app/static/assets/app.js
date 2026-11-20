@@ -23,6 +23,11 @@ class ApiError extends Error {
 
 async function api(path, options = {}) {
   const headers = new Headers(options.headers || {});
+  const method = (options.method || "GET").toUpperCase();
+  const writeMethods = new Set(["POST", "PATCH", "PUT", "DELETE"]);
+  if (writeMethods.has(method) && !headers.has("X-Baton-Client")) {
+    headers.set("X-Baton-Client", "web");
+  }
   const request = { ...options, headers, credentials: "same-origin" };
   const response = await fetch(path, request);
   if (response.status === 204) return null;
@@ -650,13 +655,39 @@ function renderActivity(container, events) {
 
 async function refreshOverviewAnalytics() {
   try {
-    const [handover, events] = await Promise.all([api("/api/handover"), api("/api/audit?limit=8")]);
+    const [handover, events, claims, jobs] = await Promise.all([
+      api("/api/handover"),
+      api("/api/audit?limit=8"),
+      api("/api/review/claims").catch(() => []),
+      api("/api/pipeline/jobs").catch(() => []),
+    ]);
     renderLabelBars($("#label-bars"), handover.claims || []);
     renderActivity($("#activity-feed"), events || []);
+    renderOverviewExtras(handover, claims || [], jobs || []);
   } catch {
     $("#label-bars").replaceChildren(makeElement("p", "handover-note", "Run the pipeline to see knowledge health."));
     $("#activity-feed").replaceChildren(makeElement("p", "handover-note", "No events recorded yet."));
+    renderOverviewExtras(null, [], []);
   }
+}
+
+function renderOverviewExtras(handover, claims, jobs) {
+  // Pending reviews count
+  const pending = (claims || []).filter(c => c.review_status === "proposed").length;
+  // Unanswered questions
+  const openQuestions = handover?.stats?.questions_open ?? 0;
+  // Latest pipeline status
+  const latestJob = (jobs || []).find(j => j.kind === "pipeline");
+  const pipelineStatus = latestJob ? latestJob.status : "not run";
+
+  const stats = $("#overview-extra-stats");
+  if (!stats) return; // not rendered yet
+  const pendingEl = stats.querySelector("[data-overview-pending]");
+  if (pendingEl) pendingEl.textContent = pending;
+  const questionsEl = stats.querySelector("[data-overview-open-questions]");
+  if (questionsEl) questionsEl.textContent = openQuestions;
+  const pipelineEl = stats.querySelector("[data-overview-pipeline]");
+  if (pipelineEl) pipelineEl.textContent = pipelineStatus;
 }
 
 /* --- extraction --------------------------------------------------------------------------------- */
@@ -707,7 +738,8 @@ function renderPipelineActions(force) {
 
 function renderPipelineResult(result) {
   $("#pipeline-spinner").hidden = true;
-  $("#pipeline-stage").textContent = `Extracted ${result.claims} claims from ${result.evidence} verified citations.`;
+  const engineLabel = { llm: "LLM", rules: "rules", failed: "failed" }[result.engine] || result.engine;
+  $("#pipeline-stage").textContent = `Extracted ${result.claims} claims from ${result.evidence} verified citations (engine: ${engineLabel}).`;
   $("#pipeline-note").textContent = result.dropped
     ? `${result.dropped} unverifiable claims were dropped.` : "No claims were dropped.";
   const stats = $("#pipeline-stats");

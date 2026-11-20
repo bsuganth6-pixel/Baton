@@ -109,4 +109,4 @@ def test_limits_have_sane_bounds(bad: dict[str, int]) -> None:
 def test_defaults_are_the_secure_ones() -> None:
     settings = Settings(_env_file=None)
     assert (settings.app_env, settings.cookie_secure, settings.demo_mode, settings.show_withheld_count) == (
-        "development", True, False, True)
+        "development", True, False, False)

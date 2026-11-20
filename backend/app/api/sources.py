@@ -12,11 +12,31 @@ from app.api.schemas import ChunkOut, SearchHit, SourceOut, UploadOut
 from app.config import Settings
 from app.ingest.service import find_project, get_or_create_project, ingest_upload
 from app.ingest.validate import IngestError
-from app.models import Chunk, Clearance, Source, SourceKind, SourceStatus, User
+from app.models import Chunk, Clearance, Role, Source, SourceKind, SourceStatus, User
 from app.protect.acl import Permission, clearance_for
 
 router = APIRouter(prefix="/api", tags=["sources"])
 SNIPPET_RADIUS = 90
+
+
+def _enforced_clearance(requested_clearance: int, user: User) -> int:
+    """Enforce clearance rules based on role. Admin/Manager may assign explicit level.
+    Leaver uploads must receive CONFIDENTIAL (2); lower values are raised up to 2.
+    Successor uploads must receive CONFIDENTIAL (2); lower values are raised up to 2.
+    Teammate uploads must receive INTERNAL (1); lower values are raised up to 1.
+    Frontend-supplied clearance is never trusted without checking the user's role."""
+    role_clearance_map = {
+        Role.ADMIN: 3,
+        Role.MANAGER: 3,
+        Role.LEAVER: 2,     # leaver may assign up to CONFIDENTIAL; lower → raise to 2
+        Role.SUCCESSOR: 2,  # successor may assign up to CONFIDENTIAL; lower → raise to 2
+        Role.TEAMMATE: 1,   # teammate may assign up to INTERNAL; lower → raise to 1
+    }
+    if user.role in (Role.ADMIN, Role.MANAGER):
+        return requested_clearance  # admin/manager retain explicit control
+    max_allowed = role_clearance_map.get(user.role, 0)
+    enforced = max(requested_clearance, max_allowed)
+    return enforced
 
 
 def _source_out(source: Source, chunk_count: int) -> SourceOut:
@@ -64,6 +84,7 @@ def upload_source(
     db: Session = Depends(get_db),
     settings: Settings = Depends(get_settings_dep),
 ) -> UploadOut:
+    clearance = _enforced_clearance(clearance, user)
     data = file.file.read(settings.max_upload_bytes + 1)  # never read more than the limit allows
     project = get_or_create_project(db)
     try:

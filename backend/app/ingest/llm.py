@@ -13,12 +13,18 @@ from __future__ import annotations
 import json
 import logging
 import re
+import time
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
 from typing import Protocol
 
 log = logging.getLogger("baton.llm")
+
+# Retry configuration for transient API errors
+MAX_RETRIES = 3
+BASE_BACKOFF_SECONDS = 1.0
+RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
 
 
 @dataclass(frozen=True)
@@ -96,13 +102,56 @@ def render_chunks(chunks: list[ChunkView]) -> str:
 # --- OpenRouter client (free models, OpenAI-compatible) ----------------------------------------------
 
 class OpenRouterClient:
-    """Calls POST {base}/chat/completions. Raises on failure; the caller decides whether to fall back."""
+    """Calls POST {base}/chat/completions. Raises on failure; the caller decides whether to fall back.
+
+    Bounded retries cover transient failures: 429 (rate limit), 5xx (server errors), and network
+    timeouts. Invalid API keys, bad model ids and malformed requests are not retried — they fail fast
+    so the deterministic fallback keeps the workflow functional.
+    """
 
     def __init__(self, api_key: str, model: str, base_url: str = "https://openrouter.ai/api/v1",
                  timeout: float = 120.0) -> None:
         if not api_key:
             raise ValueError("OpenRouterClient needs an API key")
         self.api_key, self.model, self.base_url, self.timeout = api_key, model, base_url.rstrip("/"), timeout
+
+    def _call_api(self, payload: dict) -> dict:
+        body = json.dumps(payload).encode("utf-8")
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://github.com/bsuganth6-pixel/Baton",
+            "X-Title": "Baton",
+        }
+        last_exc: Exception | None = None
+        for attempt in range(MAX_RETRIES + 1):
+            request = urllib.request.Request(
+                f"{self.base_url}/chat/completions", data=body,
+                headers=headers, method="POST",
+            )
+            try:
+                with urllib.request.urlopen(request, timeout=self.timeout) as response:
+                    raw = response.read().decode("utf-8")
+                    return json.loads(raw)
+            except urllib.error.HTTPError as exc:
+                # Log only status + code family, never the body (it may echo source content or keys).
+                log.warning("OpenRouter API returned %s on attempt %d/%d",
+                            exc.code, attempt + 1, MAX_RETRIES + 1)
+                if exc.code in RETRYABLE_STATUS_CODES and attempt < MAX_RETRIES:
+                    last_exc = exc
+                    time.sleep(BASE_BACKOFF_SECONDS * (2 ** attempt))
+                    continue
+                raise ExtractionError(
+                    f"extraction API call failed (HTTP {exc.code})") from exc
+            except (urllib.error.URLError, TimeoutError) as exc:
+                last_exc = exc
+                if attempt < MAX_RETRIES:
+                    log.warning("OpenRouter API call failed on attempt %d/%d: %s",
+                                attempt + 1, MAX_RETRIES + 1, type(exc).__name__)
+                    time.sleep(BASE_BACKOFF_SECONDS * (2 ** attempt))
+                    continue
+                raise ExtractionError(f"extraction API call failed: {type(exc).__name__}") from exc
+        raise ExtractionError(f"extraction API call failed after {MAX_RETRIES + 1} attempts") from last_exc
 
     def extract(self, chunks: list[ChunkView]) -> list[ExtractedClaim]:
         payload = {
@@ -114,18 +163,12 @@ class OpenRouterClient:
                 {"role": "user", "content": EXTRACTION_USER.format(chunks=render_chunks(chunks)[:90_000])},
             ],
         }
-        body = json.dumps(payload).encode("utf-8")
-        request = urllib.request.Request(
-            f"{self.base_url}/chat/completions", data=body,
-            headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json",
-                     "HTTP-Referer": "https://github.com/bsuganth6-pixel/Baton", "X-Title": "Baton"},
-            method="POST",
-        )
         try:
-            with urllib.request.urlopen(request, timeout=self.timeout) as response:
-                data = json.loads(response.read().decode("utf-8"))
-        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
-            raise ExtractionError(f"extraction API call failed: {type(exc).__name__}") from exc
+            data = self._call_api(payload)
+        except ExtractionError:
+            raise
+        except json.JSONDecodeError as exc:
+            raise ExtractionError("extraction API returned invalid JSON") from exc
         choices = data.get("choices") or []
         if not choices:
             raise ExtractionError("extraction API returned no choices")
@@ -186,18 +229,12 @@ class AssistantClient(OpenRouterClient):
                 {"role": "user", "content": ANSWER_USER.format(question=question, claims=render_claims(claims))},
             ],
         }
-        body = json.dumps(payload).encode("utf-8")
-        request = urllib.request.Request(
-            f"{self.base_url}/chat/completions", data=body,
-            headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json",
-                     "HTTP-Referer": "https://github.com/bsuganth6-pixel/Baton", "X-Title": "Baton"},
-            method="POST",
-        )
         try:
-            with urllib.request.urlopen(request, timeout=self.timeout) as response:
-                data = json.loads(response.read().decode("utf-8"))
-        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
-            raise ExtractionError(f"assistant API call failed: {type(exc).__name__}") from exc
+            data = self._call_api(payload)
+        except ExtractionError:
+            raise
+        except json.JSONDecodeError as exc:
+            raise ExtractionError("assistant API returned invalid JSON") from exc
         choices = data.get("choices") or []
         if not choices:
             raise ExtractionError("assistant API returned no choices")
@@ -218,11 +255,19 @@ def parse_answer(text: str) -> dict:
         return {"answer": "", "citations": [], "failed": True}
     if not isinstance(data, dict):
         return {"answer": "", "citations": [], "failed": True}
-    citations = [
-        {"claim_id": int(c["claim_id"]), "chunk_id": int(c["chunk_id"]), "quote": str(c["quote"])}
-        for c in data.get("citations") or []
-        if isinstance(c, dict) and c.get("claim_id") is not None and c.get("chunk_id") is not None and c.get("quote")
-    ]
+    citations: list[dict] = []
+    for c in data.get("citations") or []:
+        if not isinstance(c, dict):
+            continue
+        try:
+            claim_id = int(c.get("claim_id"))
+            chunk_id = int(c.get("chunk_id"))
+        except (TypeError, ValueError):
+            continue
+        quote = c.get("quote")
+        if quote is None or not str(quote).strip():
+            continue
+        citations.append({"claim_id": claim_id, "chunk_id": chunk_id, "quote": str(quote)})
     return {"answer": str(data.get("answer", "")).strip(), "citations": citations, "failed": False}
 
 
@@ -244,11 +289,21 @@ def parse_claims(text: str) -> list[ExtractedClaim]:
     for item in claims:
         if not isinstance(item, dict):
             continue
-        citations = [
-            Citation(chunk_id=int(c["chunk_id"]), quote=str(c["quote"]))
-            for c in item.get("citations") or []
-            if isinstance(c, dict) and c.get("chunk_id") is not None and c.get("quote")
-        ]
+        citations: list[Citation] = []
+        for c in item.get("citations") or []:
+            if not isinstance(c, dict):
+                continue
+            chunk_id_raw = c.get("chunk_id")
+            quote = c.get("quote")
+            if chunk_id_raw is None or quote is None:
+                continue
+            try:
+                chunk_id = int(chunk_id_raw)
+            except (TypeError, ValueError):
+                continue
+            if not str(quote).strip():
+                continue
+            citations.append(Citation(chunk_id=chunk_id, quote=str(quote)))
         if not citations:
             continue
         parsed.append(ExtractedClaim(

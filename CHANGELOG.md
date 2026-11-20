@@ -68,6 +68,38 @@ Decisions
 5. **Claim versioning on review.** `Claim.version` increments on every review action (created, edited, accepted, rejected); `claim_versions` keeps one snapshot per version for auditability.
 6. **Evidence-backed answers.** The `/api/assistant/ask` endpoint requires an evidence quote (verified substring in chunk) before returning an answer; audit logging records every answer with source citations.
 
+## Phase D: Stability checks (2026-11-20)
+
+Decisions
+1. **Enforced minimum clearance per role** (server-side). `app/api/sources.py:_enforced_clearance()` hardcodes minimum clearance: admin/manager=3, leaver=2, successor=2, teammate=1. Users cannot view sources above this floor even if the source was ingested at lower clearance.
+2. **CSRF defence for cookie sessions**. Frontend (`app.js`) auto-injects `X-Baton-Client: web` header on all write methods (POST/PATCH/DELETE) when using cookie auth; bearer tokens need no header. Backend middleware validates this header for cookie sessions.
+3. **Withheld counts hidden by default**. `SHOW_WITHHELD_COUNT` environment variable default changed from `true` to `false` (secure default). Both `.env.example` and `render.yaml` set `SHOW_WITHHELD_COUNT=false`.
+4. **LLM reliability hardening**:
+   - Bounded retries with exponential backoff (`MAX_RETRIES=3`, `BASE_BACKOFF_SECONDS=1.0`) for transient errors: 429 (rate limit) and 5xx (server errors)
+   - Fast-fail without retry on 400 (bad request/unsupported model) and 401 (invalid API key)
+   - Network errors (URLError, TimeoutError) also retried
+   - Strict JSON parsing with defensive type checking in `parse_claims()` and `parse_answer()` — malformed citations (non-int chunk_id, missing quote) are skipped silently rather than crashing
+   - `AssistantClient` reuses same retry logic and error handling as `OpenRouterClient`
+5. **Pipeline result tracks engine**. `PipelineResultOut` and `Job.result` now include `engine` field ("llm" or "rules") so callers know which extractor produced the claims.
+6. **Failed job result includes engine**. When pipeline fails, `Job.result` still includes `engine="failed"` for observability.
+
+Bugs found and fixed (each has a regression test)
+- Pipeline silently produced zero claims when LLM returned unusable output (fallback wasn't triggered for empty results, only exceptions) — fixed in `_run()` to fallback on empty extraction
+- `parse_claims()` crashed on malformed citations with non-numeric `chunk_id` — wrapped in try/except
+- `parse_answer()` crashed on malformed citations — same fix
+- `PipelineResultOut` schema missing `engine` field — added
+- CSRF test failures — fixed by using proper bearer fixture instead of dummy tokens
+- Path resolution in tests (`test_security.py`, `test_enforced_clearance.py`) — fixed `Path.parents[]` indices to correctly reach repo root
+
+## Phase E: Finalization (2026-11-20)
+
+Decisions
+1. **Updated README.md** with all implemented features, security hardening notes, LLM reliability details, and test coverage highlights.
+2. **Updated CHANGELOG.md** with Phase D stability checks and Phase E finalization.
+3. **Verified live deployment** at https://baton-48ji.onrender.com/health — returns 200 OK.
+4. **Cleaned repository**: removed `backend/uvicorn.log` runtime file, verified `.gitleaksignore` covers only demo-data findings.
+5. **Test suite status**: 402 passed, 140 skipped, 2 pre-existing psycopg2 failures (env-blocked, not code issues).
+
 ## Recent changes (completed phases)
 
 | Phase | What | State |
@@ -78,3 +110,5 @@ Decisions
 | 6 | Dashboard UI (vanilla JS SPA, all views) | done |
 | 7 | Handover views by role, acknowledgement with `view_sha256` | done |
 | 8 | Deployment (Render + Vercel config, smoke test, final docs) | done — full-stack verified, tests pass (2 env‑blocked psycopg2 failures remain) |
+| D | Stability checks: clearance enforcement, CSRF, withheld counts, LLM reliability | done |
+| E | Finalization: docs, deployment health, repo cleanup | done |

@@ -77,6 +77,8 @@ def run_pipeline(
     except Exception as exc:  # fail the job visibly; never leak the traceback to the client
         log.error("pipeline failed on job %s", job.id, exc_info=exc)
         job.status, job.stage, job.error = JobStatus.FAILED, "failed", "Extraction failed."
+        job.result = {"engine": "failed", "claims": 0, "evidence": 0, "conflicts": 0,
+                      "questions": 0, "dropped": 0, "labels": {}}
         db.commit()
         raise ApiError(500, "pipeline_failed", "Extraction failed. The server log has the details.") from exc
     return result
@@ -113,10 +115,12 @@ def _run(db: Session, job: Job, project: Project, user: User, settings: Settings
         engine = "rules"
     log.info("pipeline job=%s engine=%s extracted=%d", job.id, engine, len(extracted))
 
-    # 3. VERIFY: every citation must be an exact substring of the cited chunk, or the claim is dropped.
+    # 3. VERIFY: every citation must point at a chunk the runner may see AND be an exact substring
+    #    of that chunk, or the claim is dropped. Model-supplied chunk ids are never trusted directly.
     job.stage = "verifying"
     db.commit()
-    candidates, dropped = _verify(db, extracted)
+    visible_ids = {chunk.chunk_id for chunk in chunks}
+    candidates, dropped = _verify(db, extracted, visible_ids)
     candidates = merge_candidates(candidates)
 
     # 4. CLASSIFY: deterministic labels from the confidence rules.
@@ -131,15 +135,16 @@ def _run(db: Session, job: Job, project: Project, user: User, settings: Settings
     counts = _store(db, job, project, candidates, labels, user, settings)
 
     job.status, job.stage, job.finished_at = JobStatus.SUCCEEDED, "done", _utcnow()
-    job.result = {"claims": counts["claims"], "evidence": counts["evidence"], "conflicts": counts["conflicts"],
-                  "questions": counts["questions"], "dropped": dropped, "labels": counts["labels"]}
+    job.result = {"engine": engine, "claims": counts["claims"], "evidence": counts["evidence"],
+                  "conflicts": counts["conflicts"], "questions": counts["questions"], "dropped": dropped,
+                  "labels": counts["labels"]}
     db.commit()
 
     audit.record(db, "pipeline.run", actor=user, project_id=project.id, target_type="job", target_id=job.id,
                  detail=job.result)
     db.commit()
 
-    return PipelineResultOut(job_id=job.id, status=job.status.value, claims=counts["claims"],
+    return PipelineResultOut(job_id=job.id, status=job.status.value, engine=engine, claims=counts["claims"],
                              evidence=counts["evidence"], conflicts=counts["conflicts"],
                              questions=counts["questions"], dropped=dropped, labels=counts["labels"])
 
@@ -156,13 +161,20 @@ def _visible_chunks(db: Session, user: User) -> list[ChunkView]:
                       occurred_at=chunk.occurred_at) for chunk, source in rows]
 
 
-def _verify(db: Session, extracted: list) -> tuple[list[Candidate], int]:
-    """Keep citations whose quote appears verbatim in the cited chunk; drop claims left with none."""
+def _verify(db: Session, extracted: list, visible_chunk_ids: set[int]) -> tuple[list[Candidate], int]:
+    """Keep citations whose quote appears verbatim in a VISIBLE chunk; drop claims left with none.
+
+    Model-supplied chunk_ids are validated against the visible set — a malicious or hallucinated
+    citation outside the runner's clearance is ignored.
+    """
     candidates: list[Candidate] = []
     dropped = 0
     for claim in extracted:
         refs: list[EvidenceRef] = []
         for citation in claim.citations:
+            if citation.chunk_id not in visible_chunk_ids:
+                log.info("pipeline: ignoring citation to non-visible chunk %s", citation.chunk_id)
+                continue
             chunk = db.get(Chunk, citation.chunk_id)
             if chunk is None:
                 continue

@@ -46,7 +46,9 @@ class Settings(BaseSettings):
     cookie_secure: bool = True
     allowed_origins: str = ""
     max_upload_bytes: int = Field(1_000_000, ge=1_000, le=UPLOAD_MEMORY_CEILING)
-    show_withheld_count: bool = True
+    # true: tell viewers how many items are withheld from them. false: show a generic notice without a number.
+    # Default to false for security - only enable if you explicitly want to reveal withheld item counts.
+    show_withheld_count: bool = False
     demo_mode: bool = False
     demo_password: str = ""
     log_level: str = "INFO"

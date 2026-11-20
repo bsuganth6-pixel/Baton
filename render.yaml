@@ -25,6 +25,8 @@ services:
         value: "true"
       - key: DEMO_PASSWORD
         sync: false
+      - key: SHOW_WITHHELD_COUNT
+        value: "false"
 
 databases:
   - name: baton-postgres

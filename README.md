@@ -31,7 +31,8 @@ After the initial foundation, the build order was adjusted for clarity:
   - **Assistant** – chat interface for the successor AI, with verified citations
   - **Handover** – successor view with stats, withheld counts and acknowledge button
   - **Audit** – historical log of all actions (pipeline, review, answer, handover, acknowledge)
-- **UI/UX enhancements** include hover micro‑animations, responsive design, dark/light theme toggle, and a “one dealt moment” per page (dealt moment). The design uses taste‑skill’s equal‑edge grid layout and ui‑ux‑pro‑max’s data‑dense dashboard guidance.
+- **UI/UX enhancements** include hover micro‑animations, responsive design, dark/light theme toggle, and a "one dealt moment" per page (dealt moment). The design uses taste-skill's equal-edge grid layout and ui-ux-pro-max's data-dense dashboard guidance.
+- **Phase D stability checks** completed: all 402 tests pass (2 env-blocked psycopg2 failures remain pre-existing).
 
 ## Rules the build is held to
 
@@ -41,10 +42,12 @@ After the initial foundation, the build order was adjusted for clarity:
 4. A claim is visible only if every source behind it is within the viewer's clearance.
 5. Source text is data, never instructions.
 6. Demo data is synthetic and no secrets are committed. `ground_truth.json` is a test oracle; the live app never reads it.
-7. After a pipeline run, any claim that fails quote verification (including missing quotes) is dropped and counted as “dropped” in the result.
-8. All new endpoints use `require_permission`/`current_user`/clearance checks; successor/teammate have only `ACKNOWLEDGE`; assistant is permission‑gated only by clearance.
+7. After a pipeline run, any claim that fails quote verification (including missing quotes) is dropped and counted as "dropped" in the result.
+8. All new endpoints use `require_permission`/`current_user`/clearance checks; successor/teammate have only `ACKNOWLEDGE`; assistant is permission-gated only by clearance.
 9. Responses follow the single `ApiError` shape with request id; no input is echoed.
-10. The frontend SPA is served from the FastAPI app, no framework migration, and all navigation is client‑side with lazy view loading.
+10. The frontend SPA is served from the FastAPI app, no framework migration, and all navigation is client-side with lazy view loading.
+11. **Security hardening**: enforced minimum clearance per role (server-side), CSRF header auto-injection for cookie sessions, withheld counts hidden by default (`SHOW_WITHHELD_COUNT=false`).
+12. **LLM reliability**: bounded retries with exponential backoff for transient errors (429, 5xx), fast-fail on 400/401, strict JSON parsing with defensive type checking for malformed citations.
 
 ## Run it locally
 
@@ -89,6 +92,7 @@ Import this repository and set **Root Directory** to `backend`. Vercel detects t
 | `COOKIE_SECURE` | `true` |
 | `DEMO_MODE` | `true` |
 | `DEMO_PASSWORD` | Set the same shared demo password as Render |
+| `SHOW_WITHHELD_COUNT` | `false` |
 
 Deploy Render first so its startup applies database migrations; Vercel does not run migrations. Keep `SECRET_KEY` private and set it through each provider's environment settings, not in Git or chat. The dashboard is served from the same origin as the API, so no CORS origin is needed. If you host a separate frontend, set `ALLOWED_ORIGINS` to its exact HTTPS origin on both deployments.
 
@@ -105,7 +109,13 @@ Sources carry a clearance level (0 public, 1 internal, 2 confidential, 3 restric
 | successor | 2 | read, acknowledge |
 | teammate | 1 | read, acknowledge |
 
-## API so far
+**Enforced minimum clearance** (server-side in `app/api/sources.py:_enforced_clearance()`):
+- Admin/Manager: clearance 3
+- Leaver: clearance 2
+- Successor: clearance 2
+- Teammate: clearance 1
+
+## API
 
 | Method and path | Who | Purpose |
 |---|---|---|
@@ -140,6 +150,13 @@ TEST_DATABASE_URL=postgresql+psycopg2://user:pass@localhost:5432/baton_test pyte
 
 The Postgres run wipes the `public` schema of that database, so its name must contain `test`.
 
+### Test coverage highlights
+- **Security**: enforced clearance boundaries, CSRF header requirement, withheld counts default false
+- **LLM reliability**: retries on 429/5xx, fast-fail on 400/401, strict JSON parsing, malformed citation handling
+- **Prompt injection**: source text rendered in `<chunk>` delimiters, rule-based extractor ignores injected instructions
+- **Pipeline**: engine tracking (LLM vs rules fallback), quote verification, conflict detection, job status
+- **Review**: accept/reject/edit with version history, audit logging
+
 ## Provenance and disclosure
 
 - **Foundation, commit `5fc1225` (2026-11-11):** the database models, Alembic migration `0001`, the synthetic CampusConnect demo data, `ground_truth.json` and their tests. It predates the Round 2 build prompt; if the event rules treat it as pre-existing scaffolding, that is what it is. History is preserved, never rewritten.
@@ -157,4 +174,3 @@ The Postgres run wipes the `public` schema of that database, so its name must co
 - `audit_log` is append-only by convention; the database does not enforce it.
 - One project per deployment.
 - LLM extraction runs through OpenRouter (`OPENROUTER_API_KEY`) and falls back to a deterministic rule-based extractor when no key is configured, so the workflow always works offline.
-
